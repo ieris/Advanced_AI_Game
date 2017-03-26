@@ -25,13 +25,13 @@ public class Node
     }
 
     //Node constructor
-    /*public Node(bool _walkable, Vector3 _worldPosition, int _graph_x, int _graph_y)
+    public Node(bool _walkable, Vector3 _worldPosition, int _graph_x, int _graph_y)
     {
         graph_x = _graph_x;
         graph_y = _graph_y;
         walkable = _walkable;
         worldPosition = _worldPosition;
-    }*/
+    }
 
 
     //Allow to reset a node
