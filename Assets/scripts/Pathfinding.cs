@@ -57,6 +57,8 @@ public class Pathfinding : MonoBehaviour
                 {
                     if (reachable[i].h < node.h)
                         node = reachable[i];
+                        Vector3 directionToWaypoint = (target.position - seeker.transform.position);
+                        seeker.transform.Translate(directionToWaypoint * Time.deltaTime * 0.4f);
                 }
             }
 
@@ -67,9 +69,7 @@ public class Pathfinding : MonoBehaviour
             if (node == targetNode)
             {
                 //Waypoint
-                Vector3 directionToWaypoint = (target.position - seeker.transform.position);
-                seeker.transform.Translate(directionToWaypoint * Time.deltaTime);
-
+                
                 if (Vector3.Distance(seeker.transform.position, target.transform.position) <= 0.5f)
                 {
                     if (waypointIndex >= Waypoint.waypoints.Length)
@@ -115,14 +115,13 @@ public class Pathfinding : MonoBehaviour
         Node currentNode = endNode;
 
         while (currentNode != startNode)
-        {
+        {           
             path.Add(currentNode);
             currentNode = currentNode.previous;
         }
+
         path.Reverse();
-
         grid.path = path;
-
     }
 
     int GetDistance(Node nodeA, Node nodeB)
