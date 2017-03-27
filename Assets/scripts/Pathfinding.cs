@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class Pathfinding : MonoBehaviour
 {
+    
+
     //Waypoints
     Waypoint waypoint;
 
@@ -24,6 +26,8 @@ public class Pathfinding : MonoBehaviour
 
     void Start()
     {
+        
+
         target = Waypoint.waypoints[waypointIndex];
     }
 
@@ -57,18 +61,28 @@ public class Pathfinding : MonoBehaviour
                 {
                     if (reachable[i].h < node.h)
                         node = reachable[i];
-                        Vector3 directionToWaypoint = (node.worldPosition - seeker.transform.position);
-                        seeker.transform.Translate(directionToWaypoint * Time.deltaTime * 2f);
 
-                        //The addition
-                        /*for (int j = 0; j < path.Count; j++)
-                        {
-                            Debug.Log("hello " + j);
-                            Vector3 directionToNextTile = (path[j].worldPosition - path[j].previous.worldPosition);
-                            path[j].worldPosition = (directionToNextTile * Time.deltaTime);
-                        }*/
+                        //Move the guard through the nodes along the path
+                        //Vector3 directionToWaypoint = (node.worldPosition - seeker.transform.position);
+                       // seeker.transform.Translate(directionToWaypoint * Time.deltaTime * 30f);
+
+                    //Move the guard through the nodes along the path
+                    //Vector3 directionToFurtherWaypoint = (node.adjacent[i].worldPosition - seeker.transform.position);
+                    //seeker.transform.Translate(directionToFurtherWaypoint * Time.deltaTime * 0.1f);
+
+
+                    //The addition
+                    /*for (int j = 0; j < path.Count; j++)
+                    {
+                        Debug.Log("hello " + j);
+                        Vector3 directionToNextTile = (path[j].worldPosition - path[j].previous.worldPosition);
+                        path[j].worldPosition = (directionToNextTile * Time.deltaTime);
+                    }*/
                 }
             }
+
+            //Vector3 directionToFurtherWaypoint = (node.worldPosition - seeker.transform.position);
+            //seeker.transform.Translate(directionToFurtherWaypoint * Time.deltaTime * 30f);
 
             reachable.Remove(node);
             explored.Add(node);
@@ -78,16 +92,22 @@ public class Pathfinding : MonoBehaviour
             {
                 //Waypoint
                 
-                if (Vector3.Distance(seeker.transform.position, target.transform.position) <= 5f)
+                /*foreach(Node n in path)
+                {
+                    Vector3 directionToFurtherWaypoint = (n.worldPosition - seeker.transform.position);
+                    seeker.transform.Translate(directionToFurtherWaypoint * Time.deltaTime * 0.1f);
+                }*/
+
+                /*if (Vector3.Distance(seeker.transform.position, target.transform.position) < 1f)
                 {
                     //The addition
-                    for(int i = 0; i < path.Count; i++)
+                    /*for(int i = 0; i < path.Count; i++)
                     {
                         Vector3 directionToNextTile = (path[i].worldPosition - path[i].previous.worldPosition);
-                        path[i].worldPosition = (directionToNextTile * Time.deltaTime);
-                    }                    
+                        path[i].worldPosition = (directionToNextTile * Time.deltaTime * 1f);
+                    } */                   
 
-                    if (waypointIndex >= Waypoint.waypoints.Length)
+                    /*if (waypointIndex >= Waypoint.waypoints.Length)
                     {
                         waypointIndex = 0;
                     }
@@ -95,7 +115,7 @@ public class Pathfinding : MonoBehaviour
                     Debug.Log("waypoint index: " + waypointIndex);
                     waypointIndex++;
                     target = Waypoint.waypoints[waypointIndex];                                       
-                }
+                }*/
                 //End
 
                 RetracePath(startNode, targetNode);
@@ -127,16 +147,45 @@ public class Pathfinding : MonoBehaviour
     void RetracePath(Node startNode, Node endNode)
     {
         List<Node> path = new List<Node>();
+
+        
+
+        /*for (int i = 0; i < path.Count; i++)
+        {
+            directionToNextNode = (path[i].worldPosition - seeker.transform.position);
+            seeker.transform.Translate(directionToNextNode * Time.deltaTime * 0.1f);
+        }*/
+
         Node currentNode = endNode;
 
         while (currentNode != startNode)
-        {           
-            path.Add(currentNode);
-            currentNode = currentNode.previous;
+        {        
+            if( currentNode.previous != null)
+            {
+                path.Add(currentNode);
+                Vector3 directionToNextNode = (currentNode.worldPosition - currentNode.previous.worldPosition);
+                Vector3 newLocation = seeker.transform.position + directionToNextNode * Time.deltaTime * 0.1f;
+                Debug.Log("next node is at: " + newLocation);
+                //currentNode.worldPosition = newLocation;
+                currentNode = currentNode.previous;
+            }
+            else
+            {
+                Vector3 directionToNextNode = (currentNode.worldPosition - startNode.worldPosition);
+                //startNode.worldPosition += (directionToNextNode * Time.deltaTime * 0.1f);
+                Vector3 newLocation = seeker.transform.position + directionToNextNode * Time.deltaTime * 0.1f;
+                //currentNode.worldPosition = newLocation;
+                Debug.Log("next node is at: " + newLocation);
+            }
         }
 
         path.Reverse();
         grid.path = path;
+
+        /*foreach(Node n in path)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, path[0].worldPosition, Time.deltaTime * 0.2f);
+        }*/
     }
 
     int GetDistance(Node nodeA, Node nodeB)
