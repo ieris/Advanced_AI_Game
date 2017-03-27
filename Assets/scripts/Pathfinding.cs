@@ -90,6 +90,7 @@ public class Pathfinding : MonoBehaviour
 
             if (node == targetNode)
             {
+                //waypointIndex++;
                 //Debug.Log("guard position: " + seeker.transform.position);
                 //Waypoint
 
@@ -99,24 +100,24 @@ public class Pathfinding : MonoBehaviour
                     seeker.transform.Translate(directionToFurtherWaypoint * Time.deltaTime * 0.1f);
                 }*/
 
-                /*if (Vector3.Distance(seeker.transform.position, target.transform.position) < 1f)
+                if (Vector3.Distance(seeker.transform.position, target.transform.position) < 1f)
                 {
                     //The addition
                     /*for(int i = 0; i < path.Count; i++)
                     {
                         Vector3 directionToNextTile = (path[i].worldPosition - path[i].previous.worldPosition);
                         path[i].worldPosition = (directionToNextTile * Time.deltaTime * 1f);
-                    } */
+                    }*/
 
-                /*if (waypointIndex >= Waypoint.waypoints.Length)
+                if (waypointIndex >= Waypoint.waypoints.Length)
                 {
                     waypointIndex = 0;
                 }
 
-                Debug.Log("waypoint index: " + waypointIndex);
+                //Debug.Log("waypoint index: " + waypointIndex);
                 waypointIndex++;
                 target = Waypoint.waypoints[waypointIndex];                                       
-            }*/
+            }
                 //End
 
                 RetracePath(startNode, targetNode);
@@ -161,27 +162,24 @@ public class Pathfinding : MonoBehaviour
 
         while (currentNode != startNode)
         {        
+            if(waypointIndex == 2)
+            {
+                Debug.Log("HERE: " + seeker.transform.position);
+            }
+
             if( currentNode.previous != null)
             {
                 path.Add(currentNode);
                 Vector3 directionToNextNode = (currentNode.worldPosition - currentNode.previous.worldPosition);
-                Debug.Log("next node is at: " + currentNode.worldPosition);
-                //Vector3 newLocation = seeker.transform.position + directionToNextNode * Time.deltaTime * 0.1f;
+                //Debug.Log("next node is at: " + currentNode.worldPosition);
                 seeker.transform.position = Vector3.Lerp(seeker.transform.position, currentNode.worldPosition, Time.deltaTime * 1f);
-                //currentNode.worldPosition = newLocation;
-                //Debug.Log("next node is at: " + seeker.transform.position);
-                //currentNode.worldPosition = newLocation;
                 currentNode = currentNode.previous;
             }
             else
             {
                 Vector3 directionToNextNode = (currentNode.worldPosition - startNode.worldPosition);
-                Debug.Log("1 next node is at: " + currentNode.worldPosition);
-                //startNode.worldPosition = (directionToNextNode * Time.deltaTime * 0.1f);
+                //Debug.Log("1 next node is at: " + currentNode.worldPosition);
                 seeker.transform.position = Vector3.Lerp(seeker.transform.position, currentNode.worldPosition, Time.deltaTime * 1f);
-                //Vector3 newLocation = seeker.transform.position + directionToNextNode * Time.deltaTime * 0.1f;
-
-                //Debug.Log("next node is at: " + seeker.transform.position);
             }
         }
 
