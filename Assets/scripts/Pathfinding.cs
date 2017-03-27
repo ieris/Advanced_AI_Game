@@ -57,8 +57,16 @@ public class Pathfinding : MonoBehaviour
                 {
                     if (reachable[i].h < node.h)
                         node = reachable[i];
-                        Vector3 directionToWaypoint = (target.position - seeker.transform.position);
-                        seeker.transform.Translate(directionToWaypoint * Time.deltaTime * 0.4f);
+                        Vector3 directionToWaypoint = (node.worldPosition - seeker.transform.position);
+                        seeker.transform.Translate(directionToWaypoint * Time.deltaTime * 2f);
+
+                        //The addition
+                        /*for (int j = 0; j < path.Count; j++)
+                        {
+                            Debug.Log("hello " + j);
+                            Vector3 directionToNextTile = (path[j].worldPosition - path[j].previous.worldPosition);
+                            path[j].worldPosition = (directionToNextTile * Time.deltaTime);
+                        }*/
                 }
             }
 
@@ -70,8 +78,15 @@ public class Pathfinding : MonoBehaviour
             {
                 //Waypoint
                 
-                if (Vector3.Distance(seeker.transform.position, target.transform.position) <= 0.5f)
+                if (Vector3.Distance(seeker.transform.position, target.transform.position) <= 5f)
                 {
+                    //The addition
+                    for(int i = 0; i < path.Count; i++)
+                    {
+                        Vector3 directionToNextTile = (path[i].worldPosition - path[i].previous.worldPosition);
+                        path[i].worldPosition = (directionToNextTile * Time.deltaTime);
+                    }                    
+
                     if (waypointIndex >= Waypoint.waypoints.Length)
                     {
                         waypointIndex = 0;
