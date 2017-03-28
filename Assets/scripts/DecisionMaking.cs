@@ -33,15 +33,6 @@ public class DecisionMaking : MonoBehaviour
     public Vector3 directionToWaypoint;
     public float angleToWaypoint;
 
-    /*public struct Waypoints
-    {
-        public Transform targetPosition;
-        public float waitingTime;
-        public bool lookAt;
-        public Transform targetDirection;
-        public float lookingSpeed; 
-    }*/
-
     void Awake()
     {
 
@@ -149,14 +140,14 @@ public class DecisionMaking : MonoBehaviour
             }
             else
             {
-                //lineRender.SetVertexCount(0);
-                //Debug.Log("Not visible");
+                lineRender.SetVertexCount(0);
+                Debug.Log("Not visible");
             }
         }
         else
         {
-            //lineRender.SetVertexCount(0);
-            //Debug.Log("Not visible");
+            lineRender.SetVertexCount(0);
+            Debug.Log("Not visible");
         }
 
     }

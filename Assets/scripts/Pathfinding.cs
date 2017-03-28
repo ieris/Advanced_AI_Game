@@ -4,14 +4,13 @@ using System.Collections.Generic;
 
 public class Pathfinding : MonoBehaviour
 {
-    
-
     //Waypoints
     Waypoint waypoint;
 
-    public float walkingSpeed = 10f;
-    private Vector3 currentWaypoint;
-    private int waypointIndex = 0;
+    public float rotationSpeed = 0.0002f;
+    public float walkingSpeed = 0.0002f;
+    public Vector3 currentWaypoint;
+    public int waypointIndex = 0;
 
 
     public Transform seeker;
@@ -21,13 +20,11 @@ public class Pathfinding : MonoBehaviour
 
     void Awake()
     {
-        grid = GetComponent<Grid>();       
+        grid = GetComponent<Grid>();
     }
 
     void Start()
     {
-        
-
         target = Waypoint.waypoints[waypointIndex];
     }
 
@@ -36,7 +33,7 @@ public class Pathfinding : MonoBehaviour
         FindPath(seeker.position, target.position);
     }
 
-    void FindPath(Vector3 startPos, Vector3 targetPos)
+    public void FindPath(Vector3 startPos, Vector3 targetPos)
     {
         List<Node> reachable; //Open
         List<Node> explored;  //Closed
@@ -100,25 +97,26 @@ public class Pathfinding : MonoBehaviour
                     seeker.transform.Translate(directionToFurtherWaypoint * Time.deltaTime * 0.1f);
                 }*/
 
-                if (Vector3.Distance(seeker.transform.position, target.transform.position) < 1f)
+                //if (Vector3.Distance(seeker.transform.position, target.transform.position) < 1f)
+                //{
+                //The addition
+                /*for(int i = 0; i < path.Count; i++)
                 {
-                    //The addition
-                    /*for(int i = 0; i < path.Count; i++)
-                    {
-                        Vector3 directionToNextTile = (path[i].worldPosition - path[i].previous.worldPosition);
-                        path[i].worldPosition = (directionToNextTile * Time.deltaTime * 1f);
-                    }*/
+                    Vector3 directionToNextTile = (path[i].worldPosition - path[i].previous.worldPosition);
+                    path[i].worldPosition = (directionToNextTile * Time.deltaTime * 1f);
+                }*/
 
-                if (waypointIndex >= Waypoint.waypoints.Length)
+                /*if (waypointIndex >= Waypoint.waypoints.Length)
                 {
                     waypointIndex = 0;
-                }
+                }*/
 
                 //Debug.Log("waypoint index: " + waypointIndex);
-                waypointIndex++;
-                target = Waypoint.waypoints[waypointIndex];                                       
-            }
+                //waypointIndex++;
+                //target = Waypoint.waypoints[waypointIndex];                                       
+                //}
                 //End
+
 
                 RetracePath(startNode, targetNode);
                 return;
@@ -162,28 +160,42 @@ public class Pathfinding : MonoBehaviour
 
         while (currentNode != startNode)
         {        
-            if(waypointIndex == 2)
-            {
-                Debug.Log("HERE: " + seeker.transform.position);
-            }
-
-            if( currentNode.previous != null)
-            {
+            //if( currentNode.previous != null)
+            //{
                 path.Add(currentNode);
-                Vector3 directionToNextNode = (currentNode.worldPosition - currentNode.previous.worldPosition);
-                //Debug.Log("next node is at: " + currentNode.worldPosition);
-                seeker.transform.position = Vector3.Lerp(seeker.transform.position, currentNode.worldPosition, Time.deltaTime * 1f);
-                currentNode = currentNode.previous;
-            }
-            else
-            {
-                Vector3 directionToNextNode = (currentNode.worldPosition - startNode.worldPosition);
-                //Debug.Log("1 next node is at: " + currentNode.worldPosition);
-                seeker.transform.position = Vector3.Lerp(seeker.transform.position, currentNode.worldPosition, Time.deltaTime * 1f);
-            }
-        }
+            //Vector3 directionToNextNode = (currentNode.worldPosition - currentNode.previous.worldPosition);
+            //Debug.Log("next node is at: " + currentNode.worldPosition);
+            //seeker.transform.position = Vector3.Lerp(seeker.transform.position, currentNode.worldPosition, Time.deltaTime * 0.01f);
 
-        path.Reverse();
+                if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, transform.position) < 3.0f)
+                {
+                    //Debug.Log("success!");
+                    waypointIndex++;
+                    Debug.Log(waypointIndex);
+
+                    if (waypointIndex >= Waypoint.waypoints.Length)
+                    {
+                        Debug.Log("ranOut");
+                        waypointIndex = 0;
+                    }
+                }
+
+                //Rotate to waypoint
+                Vector3 directionToNextNodePoint = currentNode.worldPosition - seeker.transform.position;
+                seeker.transform.rotation = Quaternion.Slerp(seeker.transform.rotation, Quaternion.LookRotation(directionToNextNodePoint), rotationSpeed);
+                seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, currentNode.worldPosition, Time.deltaTime* walkingSpeed);
+
+                currentNode = currentNode.previous;
+            //}
+            //else
+            //{
+                //Vector3 directionToNextNode = (currentNode.worldPosition - startNode.worldPosition);
+                //Debug.Log("1 next node is at: " + currentNode.worldPosition);
+                //seeker.transform.position = Vector3.Lerp(seeker.transform.position, currentNode.worldPosition, Time.deltaTime * 0.01f);
+            //}
+        }
+        
+        path.Reverse();       
         grid.path = path;
 
         /*foreach(Node n in path)
