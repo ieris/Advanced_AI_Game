@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class Pathfinding : MonoBehaviour
 {
+    //IEnumerator co;
+
     //Waypoints
     Waypoint waypoint;
 
@@ -35,7 +37,12 @@ public class Pathfinding : MonoBehaviour
     {
         if(startFollowingPath)
         {
-            FollowThePath();
+            
+            StartCoroutine("FollowThePath");
+        }
+        else
+        {
+            StopCoroutine("FollowThePath");
         }
     }
 
@@ -116,43 +123,49 @@ public class Pathfinding : MonoBehaviour
         startFollowingPath = true;
     }
 
-    void FollowThePath()
+    IEnumerator FollowThePath()
     {
-        //Rotate to waypoint
-        float t = 0f;
-        float time = 20f;
+        int i = 0;
 
-        for (int i = 0; i < grid.path.Count; i++)
+        while (true)
         {
-            while (t < 1)
+            if (waypointIndex == Waypoint.waypoints.Length)
             {
-                t += Time.deltaTime / time;
-
-                //Debug.Log(grid.path[i].worldPosition);
-                seeker.transform.LookAt(grid.path[i].worldPosition);
-                //float distanceToNextNode = Vector3.Distance(seeker.transform.position, grid.path[i].worldPosition);
-                seeker.transform.position = Vector3.Slerp(seeker.transform.position, grid.path[i].worldPosition, time);
-                //Vector3 directionToNextNodePoint = grid.path[i].worldPosition - seeker.transform.position;
-                //seeker.transform.rotation = Quaternion.Slerp(seeker.transform.rotation, Quaternion.LookRotation(directionToNextNodePoint), rotationSpeed);
-                //seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, Time.deltaTime / walkingSpeed);
-                Debug.Log(seeker.transform.position);
-            }
-
-            t = 0;
-        }
-
-        if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, transform.position) < 3.0f)
-        {
-            Debug.Log("success!");
-            waypointIndex++;
-            Debug.Log(waypointIndex);
-
-            if (waypointIndex >= Waypoint.waypoints.Length)
-            {
+                //StopCoroutine("FollowThePath");
+                //startFollowingPath = false;
                 Debug.Log("ranOut");
                 waypointIndex = 0;
+                target = Waypoint.waypoints[waypointIndex];
+                //startFollowingPath = true;
+                FindPath(seeker.position, target.position);
+                StopCoroutine("FollowThePath");
+                //StartCoroutine(FollowThePath());
+
+
+                //yield break;
             }
-        }
+
+            //Reached the waypoint
+            if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, seeker.transform.position) <= 1f)
+            {
+                startFollowingPath = false;
+                waypointIndex++;
+                Debug.Log(waypointIndex);
+
+                target = Waypoint.waypoints[waypointIndex];
+                FindPath(seeker.position, target.position);
+
+                //startFollowingPath = true;
+                //StartCoroutine(FollowThePath());
+
+                Debug.Log((waypointIndex == Waypoint.waypoints.Length));
+                StopCoroutine("FollowThePath");
+            }
+           
+            seeker.transform.position = Vector3.Slerp(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed);
+            i++;
+            yield return null;
+        }     
     }
 
 
