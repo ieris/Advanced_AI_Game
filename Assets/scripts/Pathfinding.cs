@@ -7,14 +7,16 @@ public class Pathfinding : MonoBehaviour
     //Waypoints
     Waypoint waypoint;
 
-    public float rotationSpeed = 0.0002f;
-    public float walkingSpeed = 0.0002f;
+    public float rotationSpeed = 4f;
+    public float walkingSpeed = 2f;
     public Vector3 currentWaypoint;
     public int waypointIndex = 0;
 
-
     public Transform seeker;
     public Transform target;
+
+    private bool drawingPath = false;
+    private bool startFollowingPath = false;
 
     Grid grid;
 
@@ -26,11 +28,15 @@ public class Pathfinding : MonoBehaviour
     void Start()
     {
         target = Waypoint.waypoints[waypointIndex];
+        FindPath(seeker.position, target.position);
     }
 
     void Update()
     {
-        FindPath(seeker.position, target.position);
+        if(startFollowingPath)
+        {
+            FollowThePath();
+        }
     }
 
     public void FindPath(Vector3 startPos, Vector3 targetPos)
@@ -58,28 +64,8 @@ public class Pathfinding : MonoBehaviour
                 {
                     if (reachable[i].h < node.h)
                         node = reachable[i];
-
-                        //Move the guard through the nodes along the path
-                        //Vector3 directionToWaypoint = (node.worldPosition - seeker.transform.position);
-                       // seeker.transform.Translate(directionToWaypoint * Time.deltaTime * 30f);
-
-                    //Move the guard through the nodes along the path
-                    //Vector3 directionToFurtherWaypoint = (node.adjacent[i].worldPosition - seeker.transform.position);
-                    //seeker.transform.Translate(directionToFurtherWaypoint * Time.deltaTime * 0.1f);
-
-
-                    //The addition
-                    /*for (int j = 0; j < path.Count; j++)
-                    {
-                        Debug.Log("hello " + j);
-                        Vector3 directionToNextTile = (path[j].worldPosition - path[j].previous.worldPosition);
-                        path[j].worldPosition = (directionToNextTile * Time.deltaTime);
-                    }*/
                 }
             }
-
-            //Vector3 directionToFurtherWaypoint = (node.worldPosition - seeker.transform.position);
-            //seeker.transform.Translate(directionToFurtherWaypoint * Time.deltaTime * 30f);
 
             reachable.Remove(node);
             explored.Add(node);
@@ -87,37 +73,6 @@ public class Pathfinding : MonoBehaviour
 
             if (node == targetNode)
             {
-                //waypointIndex++;
-                //Debug.Log("guard position: " + seeker.transform.position);
-                //Waypoint
-
-                /*foreach(Node n in path)
-                {
-                    Vector3 directionToFurtherWaypoint = (n.worldPosition - seeker.transform.position);
-                    seeker.transform.Translate(directionToFurtherWaypoint * Time.deltaTime * 0.1f);
-                }*/
-
-                //if (Vector3.Distance(seeker.transform.position, target.transform.position) < 1f)
-                //{
-                //The addition
-                /*for(int i = 0; i < path.Count; i++)
-                {
-                    Vector3 directionToNextTile = (path[i].worldPosition - path[i].previous.worldPosition);
-                    path[i].worldPosition = (directionToNextTile * Time.deltaTime * 1f);
-                }*/
-
-                /*if (waypointIndex >= Waypoint.waypoints.Length)
-                {
-                    waypointIndex = 0;
-                }*/
-
-                //Debug.Log("waypoint index: " + waypointIndex);
-                //waypointIndex++;
-                //target = Waypoint.waypoints[waypointIndex];                                       
-                //}
-                //End
-
-
                 RetracePath(startNode, targetNode);
                 return;
             }
@@ -148,61 +103,58 @@ public class Pathfinding : MonoBehaviour
     {
         List<Node> path = new List<Node>();
 
-        
-
-        /*for (int i = 0; i < path.Count; i++)
-        {
-            directionToNextNode = (path[i].worldPosition - seeker.transform.position);
-            seeker.transform.Translate(directionToNextNode * Time.deltaTime * 0.1f);
-        }*/
-
         Node currentNode = endNode;
 
         while (currentNode != startNode)
         {        
-            //if( currentNode.previous != null)
-            //{
-                path.Add(currentNode);
-            //Vector3 directionToNextNode = (currentNode.worldPosition - currentNode.previous.worldPosition);
-            //Debug.Log("next node is at: " + currentNode.worldPosition);
-            //seeker.transform.position = Vector3.Lerp(seeker.transform.position, currentNode.worldPosition, Time.deltaTime * 0.01f);
-
-                if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, transform.position) < 3.0f)
-                {
-                    //Debug.Log("success!");
-                    waypointIndex++;
-                    Debug.Log(waypointIndex);
-
-                    if (waypointIndex >= Waypoint.waypoints.Length)
-                    {
-                        Debug.Log("ranOut");
-                        waypointIndex = 0;
-                    }
-                }
-
-                //Rotate to waypoint
-                Vector3 directionToNextNodePoint = currentNode.worldPosition - seeker.transform.position;
-                seeker.transform.rotation = Quaternion.Slerp(seeker.transform.rotation, Quaternion.LookRotation(directionToNextNodePoint), rotationSpeed);
-                seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, currentNode.worldPosition, Time.deltaTime* walkingSpeed);
-
-                currentNode = currentNode.previous;
-            //}
-            //else
-            //{
-                //Vector3 directionToNextNode = (currentNode.worldPosition - startNode.worldPosition);
-                //Debug.Log("1 next node is at: " + currentNode.worldPosition);
-                //seeker.transform.position = Vector3.Lerp(seeker.transform.position, currentNode.worldPosition, Time.deltaTime * 0.01f);
-            //}
+            path.Add(currentNode);
+            currentNode = currentNode.previous;
         }
         
         path.Reverse();       
         grid.path = path;
-
-        /*foreach(Node n in path)
-        {
-            transform.position = Vector3.MoveTowards(transform.position, path[0].worldPosition, Time.deltaTime * 0.2f);
-        }*/
+        startFollowingPath = true;
     }
+
+    void FollowThePath()
+    {
+        //Rotate to waypoint
+        float t = 0f;
+        float time = 20f;
+
+        for (int i = 0; i < grid.path.Count; i++)
+        {
+            while (t < 1)
+            {
+                t += Time.deltaTime / time;
+
+                //Debug.Log(grid.path[i].worldPosition);
+                seeker.transform.LookAt(grid.path[i].worldPosition);
+                //float distanceToNextNode = Vector3.Distance(seeker.transform.position, grid.path[i].worldPosition);
+                seeker.transform.position = Vector3.Slerp(seeker.transform.position, grid.path[i].worldPosition, time);
+                //Vector3 directionToNextNodePoint = grid.path[i].worldPosition - seeker.transform.position;
+                //seeker.transform.rotation = Quaternion.Slerp(seeker.transform.rotation, Quaternion.LookRotation(directionToNextNodePoint), rotationSpeed);
+                //seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, Time.deltaTime / walkingSpeed);
+                Debug.Log(seeker.transform.position);
+            }
+
+            t = 0;
+        }
+
+        if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, transform.position) < 3.0f)
+        {
+            Debug.Log("success!");
+            waypointIndex++;
+            Debug.Log(waypointIndex);
+
+            if (waypointIndex >= Waypoint.waypoints.Length)
+            {
+                Debug.Log("ranOut");
+                waypointIndex = 0;
+            }
+        }
+    }
+
 
     int GetDistance(Node nodeA, Node nodeB)
     {
