@@ -4,7 +4,9 @@ using System.Collections.Generic;
 
 public class Pathfinding : MonoBehaviour
 {
-    //IEnumerator co;
+    //Decision Making
+
+    DecisionMaking dm;
 
     //Waypoints
     Waypoint waypoint;
@@ -29,8 +31,8 @@ public class Pathfinding : MonoBehaviour
 
     void Start()
     {
-        target = Waypoint.waypoints[waypointIndex];
-        FindPath(seeker.position, target.position);
+        //target = Waypoint.waypoints[waypointIndex];
+        //FindPath(seeker.position, target.position);
     }
 
     void Update()
@@ -161,7 +163,8 @@ public class Pathfinding : MonoBehaviour
                 Debug.Log((waypointIndex == Waypoint.waypoints.Length));
                 StopCoroutine("FollowThePath");
             }
-           
+
+            seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.Slerp(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed);
             i++;
             yield return null;

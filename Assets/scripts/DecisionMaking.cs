@@ -1,10 +1,19 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 
 public class DecisionMaking : MonoBehaviour
 {
+    //Sight
+    public float resolution;
+    public int stepCount;
+    public float stepAngleSize;
+
+
+    //public bool startFollowingPath = false;
+
     public LineRenderer lineRender;
     public LayerMask playerMask;
     public LayerMask walls;
@@ -16,8 +25,8 @@ public class DecisionMaking : MonoBehaviour
     public int health = 100;
     public int damage = 10;
     public float speed = 1.5f;
-    public int visionRadius = 20;
-    public int visionAngle = 120;
+    public int visionRadius = 10;
+    public int visionAngle = 60;
     public int audioRange = 40;
     public float rotationSpeed = 0.2f;
     
@@ -38,19 +47,32 @@ public class DecisionMaking : MonoBehaviour
 
     }
 
+    void LateUpdate()
+    {
+        sightVisualisation();
+    }
 	void Start ()
     {
-        
         lineRender = GetComponent<LineRenderer>();
         lineRender.SetWidth(0.05f, 0.05f);
         lineRender.SetColors(Color.red, Color.red);
 
     }
-	
-	void Update ()
+
+    public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
+    {
+        if (!angleIsGlobal)
+        {
+            angleInDegrees += transform.eulerAngles.y;
+        }
+        return new Vector3(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), 0, Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
+    }
+
+    void Update ()
     {
         //Wandering();
-        //watching();
+        watching();
+        //sightVisualisation();
         switch (aiState)
         {
             case States.Wander:
@@ -79,33 +101,6 @@ public class DecisionMaking : MonoBehaviour
                 //code to animate door closed and switch to closed state
                 break;
         }
-
-        if (waypoints.Length > 0)
-        {
-            
-            //directionToWaypoint = (waypoints[currentWaypoint].transform.position - transform.position);
-            //angleToWaypoint = Vector3.Angle(directionToWaypoint, transform.forward);
-
-            //transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToWaypoint), rotationSpeed * Time.deltaTime);
-            //transform.Translate(0, 0, Time.deltaTime * speed);
-            if (Vector3.Distance(waypoints[currentWaypoint].transform.position, transform.position) < 3.0f)
-            {
-                //Debug.Log("success!");
-                currentWaypoint++;
-                Debug.Log(currentWaypoint);
-
-                if (currentWaypoint >= waypoints.Length)
-                {
-                    Debug.Log("ranOut");
-                    currentWaypoint = 0;
-                }
-            }
-
-            //Rotate to waypoint
-            Vector3 directionToWayPoint = waypoints[currentWaypoint].transform.position - transform.position;
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToWayPoint), rotationSpeed * Time.deltaTime);
-            transform.Translate(0,0,Time.deltaTime * speed);
-        }
     }
 
     public enum States
@@ -117,8 +112,11 @@ public class DecisionMaking : MonoBehaviour
         Flee
     }
 
+
     public void watching()
     {
+        //sightVisualisation();
+
         //Calculate the angle from guard to the player
         //If angle from guard to player is less than the field of view angle
         //And the player is not behind an obstacle, the guard can see the player
@@ -141,50 +139,36 @@ public class DecisionMaking : MonoBehaviour
             else
             {
                 lineRender.SetVertexCount(0);
-                Debug.Log("Not visible");
+                //Debug.Log("Not visible");
             }
         }
         else
         {
             lineRender.SetVertexCount(0);
-            Debug.Log("Not visible");
+            //Debug.Log("Not visible");
         }
 
+        //sightVisualisation();
+
+    }
+
+
+    void sightVisualisation()
+    {
+        stepCount = Mathf.RoundToInt(visionAngle * resolution);
+        stepAngleSize = visionAngle / (visionAngle * stepCount);
+
+        Debug.Log(stepAngleSize);
+        for (int i = 0; i <= stepCount; i++)
+        {
+            float angle = transform.eulerAngles.y - visionAngle / 2 + stepAngleSize * i;
+            Debug.DrawLine(transform.position, transform.position + DirFromAngle(angle, true) * visionRadius, Color.red);
+        }
     }
 
     public void Wandering()
     {
-        if (waypoints.Length > 0)
-        {
-            currentWaypoint = 0;
-            directionToWaypoint = (waypoints[currentWaypoint].transform.position - transform.position);
-            angleToWaypoint = Vector3.Angle(directionToWaypoint, transform.forward);
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToWaypoint), rotationSpeed * Time.deltaTime);
-            transform.Translate(0, 0, Time.deltaTime * speed);
-            if (Vector3.Distance(waypoints[currentWaypoint].transform.position, transform.position) < 3.0f)
-            {
-                //Debug.Log("success!");
-                currentWaypoint++;
-                //Debug.Log(currentWaypoint);
-
-                if(currentWaypoint >= waypoints.Length)
-                {
-                    Debug.Log("ranOut");
-                    currentWaypoint = 0;
-                }
-            }
-
-            //Rotate to waypoint
-            //Vector3 directionToWayPoint = waypoints[currentWaypoint].transform.position - transform.position;
-            //transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(directionToWayPoint), rotationSpeed * Time.deltaTime);
-            //transform.Translate(0,0,Time.deltaTime * speed);
-        }
-
-        /*if(Vector3.Distance(player.position, this.transform.position) < 10 && (angleToPlayer < 30 || aiState == States.Seek))
-        {
-
-        }*/
     }
     private void Searching()
     {
