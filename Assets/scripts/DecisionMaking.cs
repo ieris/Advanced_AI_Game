@@ -6,10 +6,11 @@ using UnityEditor;
 
 public class DecisionMaking : MonoBehaviour
 {
+    //Pathfdinging
+    public bool wandering = false;
+
     //Sight
-    public float resolution;
-    public int stepCount;
-    public float stepAngleSize;
+    private bool seen = false;
 
 
     //public bool startFollowingPath = false;
@@ -30,7 +31,7 @@ public class DecisionMaking : MonoBehaviour
     public int audioRange = 40;
     public float rotationSpeed = 0.2f;
     
-    public States aiState = States.Wander;
+    public States aiState;
 
     public Transform player;
     public Vector3 directionToPlayer;
@@ -57,6 +58,7 @@ public class DecisionMaking : MonoBehaviour
         lineRender.SetWidth(0.05f, 0.05f);
         lineRender.SetColors(Color.red, Color.red);
 
+        aiState = States.Wander;
     }
 
     public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
@@ -71,13 +73,13 @@ public class DecisionMaking : MonoBehaviour
     void Update ()
     {
         //Wandering();
-        watching();
+        //watching();
         //sightVisualisation();
         switch (aiState)
         {
             case States.Wander:
                 //Debug.Log("Wandering");
-                //Wandering();
+                Wandering();
                 //execute closed code & listener for interaction
                 break;
             case States.Search:
@@ -86,7 +88,6 @@ public class DecisionMaking : MonoBehaviour
                 //execute code for animating the door open, switch to open when done
                 break;
             case States.Seek:
-                Debug.Log("Seeking");
                 Seeking();
                 //listening code for event to close door
                 break;
@@ -135,15 +136,19 @@ public class DecisionMaking : MonoBehaviour
                 lineRender.SetVertexCount(2);
                 lineRender.SetPosition(0, transform.position);
                 lineRender.SetPosition(1, player.position);
+
+                seen = true;
             }
             else
             {
                 lineRender.SetVertexCount(0);
+                seen = false;
                 //Debug.Log("Not visible");
             }
         }
         else
         {
+            seen = false;
             lineRender.SetVertexCount(0);
             //Debug.Log("Not visible");
         }
@@ -155,20 +160,19 @@ public class DecisionMaking : MonoBehaviour
 
     void sightVisualisation()
     {
-        stepCount = Mathf.RoundToInt(visionAngle * resolution);
-        stepAngleSize = visionAngle / (visionAngle * stepCount);
 
-        Debug.Log(stepAngleSize);
-        for (int i = 0; i <= stepCount; i++)
-        {
-            float angle = transform.eulerAngles.y - visionAngle / 2 + stepAngleSize * i;
-            Debug.DrawLine(transform.position, transform.position + DirFromAngle(angle, true) * visionRadius, Color.red);
-        }
     }
 
     public void Wandering()
     {
-
+        watching();
+        wandering = true;
+        if (seen)
+        {
+            wandering = false;
+            aiState = States.Seek;
+            
+        }
     }
     private void Searching()
     {
@@ -176,7 +180,7 @@ public class DecisionMaking : MonoBehaviour
     }
     private void Seeking()
     {
-
+        Debug.Log("I am now seeking the intruder");
     }
     private void Attacking()
     {

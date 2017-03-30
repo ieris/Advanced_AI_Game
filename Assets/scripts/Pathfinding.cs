@@ -5,7 +5,6 @@ using System.Collections.Generic;
 public class Pathfinding : MonoBehaviour
 {
     //Decision Making
-
     DecisionMaking dm;
 
     //Waypoints
@@ -20,24 +19,26 @@ public class Pathfinding : MonoBehaviour
     public Transform target;
 
     private bool drawingPath = false;
-    private bool startFollowingPath = false;
+    public bool startFollowingPath = false;
 
     Grid grid;
 
     void Awake()
     {
         grid = GetComponent<Grid>();
+        dm = GetComponent<DecisionMaking>();
     }
 
     void Start()
     {
-        //target = Waypoint.waypoints[waypointIndex];
-        //FindPath(seeker.position, target.position);
+        dm = new DecisionMaking();
+        target = Waypoint.waypoints[waypointIndex];
+        FindPath(seeker.position, target.position);
     }
 
     void Update()
     {
-        if(startFollowingPath)
+        if(dm.wandering)
         {
             
             StartCoroutine("FollowThePath");
@@ -122,7 +123,7 @@ public class Pathfinding : MonoBehaviour
         
         path.Reverse();       
         grid.path = path;
-        startFollowingPath = true;
+        dm.wandering = true;
     }
 
     IEnumerator FollowThePath()
@@ -134,7 +135,7 @@ public class Pathfinding : MonoBehaviour
             if (waypointIndex == Waypoint.waypoints.Length)
             {
                 //StopCoroutine("FollowThePath");
-                //startFollowingPath = false;
+                dm.wandering = false;
                 Debug.Log("ranOut");
                 waypointIndex = 0;
                 target = Waypoint.waypoints[waypointIndex];
@@ -150,7 +151,7 @@ public class Pathfinding : MonoBehaviour
             //Reached the waypoint
             if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, seeker.transform.position) <= 1f)
             {
-                startFollowingPath = false;
+                //startFollowingPath = false;
                 waypointIndex++;
                 Debug.Log(waypointIndex);
 
