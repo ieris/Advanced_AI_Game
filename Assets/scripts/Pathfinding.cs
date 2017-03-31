@@ -7,6 +7,8 @@ public class Pathfinding : MonoBehaviour
     //Decision Making
     DecisionMaking dm;
 
+    public bool testState = false;
+
     //Waypoints
     Waypoint waypoint;
 
@@ -17,6 +19,7 @@ public class Pathfinding : MonoBehaviour
 
     public Transform seeker;
     public Transform target;
+    public Transform player;
 
     private bool drawingPath = false;
     public bool startFollowingPath = false;
@@ -34,18 +37,25 @@ public class Pathfinding : MonoBehaviour
         dm = new DecisionMaking();
         target = Waypoint.waypoints[waypointIndex];
         FindPath(seeker.position, target.position);
+        
     }
 
     void Update()
     {
-        if(dm.wandering)
+        if (DecisionMaking.aiState == DecisionMaking.States.Seek)
         {
-            
-            StartCoroutine("FollowThePath");
-        }
-        else
-        {
+            //startFollowingPath = true;
+            Debug.Log(DecisionMaking.aiState);
             StopCoroutine("FollowThePath");
+
+            target.position = dm.player.transform;
+            FindPath(seeker.position, target.position);
+        }
+        else if(DecisionMaking.aiState == DecisionMaking.States.Wander)
+        {
+            //dm.wandering = false;
+            //Debug.Log(dm.aiState);
+            StartCoroutine("FollowThePath");
         }
     }
 
@@ -123,19 +133,22 @@ public class Pathfinding : MonoBehaviour
         
         path.Reverse();       
         grid.path = path;
-        dm.wandering = true;
+
+        //dm.wandering = true;
+
     }
 
     IEnumerator FollowThePath()
     {
         int i = 0;
 
-        while (true)
+        while(true)
         {
+
             if (waypointIndex == Waypoint.waypoints.Length)
             {
                 //StopCoroutine("FollowThePath");
-                dm.wandering = false;
+                //dm.wandering = false;
                 Debug.Log("ranOut");
                 waypointIndex = 0;
                 target = Waypoint.waypoints[waypointIndex];
@@ -145,7 +158,7 @@ public class Pathfinding : MonoBehaviour
                 //StartCoroutine(FollowThePath());
 
 
-                //yield break;
+                yield break;
             }
 
             //Reached the waypoint
@@ -161,15 +174,15 @@ public class Pathfinding : MonoBehaviour
                 //startFollowingPath = true;
                 //StartCoroutine(FollowThePath());
 
-                Debug.Log((waypointIndex == Waypoint.waypoints.Length));
+                //Debug.Log((waypointIndex == Waypoint.waypoints.Length));
                 StopCoroutine("FollowThePath");
             }
-
+           
             seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.Slerp(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed);
             i++;
             yield return null;
-        }     
+        }
     }
 
 

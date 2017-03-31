@@ -7,10 +7,12 @@ using UnityEditor;
 public class DecisionMaking : MonoBehaviour
 {
     //Pathfdinging
+    Pathfinding pathfinding;
+
     public bool wandering = false;
 
     //Sight
-    private bool seen = false;
+    public bool seen = false;
 
 
     //public bool startFollowingPath = false;
@@ -31,7 +33,7 @@ public class DecisionMaking : MonoBehaviour
     public int audioRange = 40;
     public float rotationSpeed = 0.2f;
     
-    public States aiState;
+    public static States aiState;
 
     public Transform player;
     public Vector3 directionToPlayer;
@@ -45,7 +47,8 @@ public class DecisionMaking : MonoBehaviour
 
     void Awake()
     {
-
+        pathfinding = GetComponent<Pathfinding>();
+        aiState = States.Wander;
     }
 
     void LateUpdate()
@@ -54,11 +57,11 @@ public class DecisionMaking : MonoBehaviour
     }
 	void Start ()
     {
+        pathfinding = new Pathfinding();
+
         lineRender = GetComponent<LineRenderer>();
         lineRender.SetWidth(0.05f, 0.05f);
         lineRender.SetColors(Color.red, Color.red);
-
-        aiState = States.Wander;
     }
 
     public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
@@ -75,29 +78,31 @@ public class DecisionMaking : MonoBehaviour
         //Wandering();
         //watching();
         //sightVisualisation();
+        Debug.Log(aiState);
         switch (aiState)
         {
             case States.Wander:
                 //Debug.Log("Wandering");
+                wandering = true;
+                //Debug.Log("YES " + wandering);
                 Wandering();
                 //execute closed code & listener for interaction
                 break;
             case States.Search:
-                Debug.Log("Searching");
                 Searching();
                 //execute code for animating the door open, switch to open when done
                 break;
             case States.Seek:
+                wandering = false;
+                //Debug.Log("NO " + wandering);
                 Seeking();
                 //listening code for event to close door
                 break;
             case States.Attack:
-                Debug.Log("Attacking");
                 Attacking();
                 //code to animate door closed and switch to closed state
                 break;
             case States.Flee:
-                Debug.Log("Fleeing");
                 Fleeing();
                 //code to animate door closed and switch to closed state
                 break;
@@ -142,14 +147,14 @@ public class DecisionMaking : MonoBehaviour
             else
             {
                 lineRender.SetVertexCount(0);
-                seen = false;
+                //seen = false;
                 //Debug.Log("Not visible");
             }
         }
         else
         {
             seen = false;
-            lineRender.SetVertexCount(0);
+            //lineRender.SetVertexCount(0);
             //Debug.Log("Not visible");
         }
 
@@ -158,35 +163,38 @@ public class DecisionMaking : MonoBehaviour
     }
 
 
-    void sightVisualisation()
+    public void sightVisualisation()
     {
 
     }
 
     public void Wandering()
     {
+        //wandering = true;
         watching();
-        wandering = true;
+        //Debug.Log("wandering " + wandering);
         if (seen)
         {
-            wandering = false;
             aiState = States.Seek;
-            
+            //Debug.Log(aiState);            
         }
     }
-    private void Searching()
+    public void Searching()
     {
 
     }
-    private void Seeking()
+    public void Seeking()
     {
-        Debug.Log("I am now seeking the intruder");
+        //Debug.Log("I am now seeking the intruder");
+        //pathfinding.target = player.transform;
+        //pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
+
     }
-    private void Attacking()
+    public void Attacking()
     {
 
     }
-    private void Fleeing()
+    public void Fleeing()
     {
 
     }
