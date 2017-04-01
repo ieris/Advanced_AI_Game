@@ -78,7 +78,7 @@ public class DecisionMaking : MonoBehaviour
         //Wandering();
         //watching();
         //sightVisualisation();
-        Debug.Log(aiState);
+        //Debug.Log(aiState);
         switch (aiState)
         {
             case States.Wander:
@@ -147,14 +147,14 @@ public class DecisionMaking : MonoBehaviour
             else
             {
                 lineRender.SetVertexCount(0);
-                //seen = false;
+                seen = false;
                 //Debug.Log("Not visible");
             }
         }
         else
         {
             seen = false;
-            //lineRender.SetVertexCount(0);
+            lineRender.SetVertexCount(0);
             //Debug.Log("Not visible");
         }
 
@@ -175,7 +175,7 @@ public class DecisionMaking : MonoBehaviour
         //Debug.Log("wandering " + wandering);
         if (seen)
         {
-            aiState = States.Seek;
+            //aiState = States.Seek;
             //Debug.Log(aiState);            
         }
     }

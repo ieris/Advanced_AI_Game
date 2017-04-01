@@ -6,14 +6,15 @@ public class Pathfinding : MonoBehaviour
 {
     //Decision Making
     DecisionMaking dm;
+    private int i = 0;
 
     public bool testState = false;
 
     //Waypoints
     Waypoint waypoint;
 
-    public float rotationSpeed = 4f;
-    public float walkingSpeed = 2f;
+    public float rotationSpeed = 1f;
+    public float walkingSpeed = 1.5f;
     public Vector3 currentWaypoint;
     public int waypointIndex = 0;
 
@@ -24,7 +25,7 @@ public class Pathfinding : MonoBehaviour
     private bool drawingPath = false;
     public bool startFollowingPath = false;
 
-    Grid grid;
+    public Grid grid;
 
     void Awake()
     {
@@ -42,16 +43,60 @@ public class Pathfinding : MonoBehaviour
 
     void Update()
     {
+        //Debug.Log(target.transform.position);
+
+        if (startFollowingPath == true)
+        {
+            seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed * Time.deltaTime);
+            
+            if(Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
+            {
+                i++;
+            }
+        }
+
+        //Reached the waypoint
+        if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, seeker.transform.position) <= 1f)
+        {
+            //startFollowingPath = false;
+            waypointIndex++;
+            Debug.Log(waypointIndex);
+
+            target = Waypoint.waypoints[waypointIndex];
+            FindPath(seeker.position, target.position);
+
+            //startFollowingPath = true;
+            //StartCoroutine(FollowThePath());
+
+            //Debug.Log((waypointIndex == Waypoint.waypoints.Length));
+            StopCoroutine("FollowThePath");
+        }
+
+        /*int i = 0;
+            //Vector3 directionToWaypoint = (grid.path[10].worldPosition - seeker.transform.position);
+            seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, target.transform.position, walkingSpeed*Time.deltaTime);
+            Debug.Log(seeker.transform.position);
+
+
+        //if (Vector3.Distance(target.transform.position, seeker.transform.position) <= 0.1f) { }
+                //i++;
+                //Debug.Log(seeker.transform.position);
+
+    }*/
         if (DecisionMaking.aiState == DecisionMaking.States.Seek)
         {
             //startFollowingPath = true;
-            Debug.Log(DecisionMaking.aiState);
+            //Debug.Log(DecisionMaking.aiState);
             StopCoroutine("FollowThePath");
+            //StopCoroutine("FindPath");
 
-            target.position = dm.player.transform;
-            FindPath(seeker.position, target.position);
+            //target.position = dm.player.transform.position;
+            //StartCoroutine(FindPath(seeker.position, target.position));
+
+            FindPath(seeker.position, player.position);
+            StartCoroutine("FollowThePath");
         }
-        else if(DecisionMaking.aiState == DecisionMaking.States.Wander)
+        if(DecisionMaking.aiState == DecisionMaking.States.Wander)
         {
             //dm.wandering = false;
             //Debug.Log(dm.aiState);
@@ -61,6 +106,7 @@ public class Pathfinding : MonoBehaviour
 
     public void FindPath(Vector3 startPos, Vector3 targetPos)
     {
+        Debug.Log("findpath");
         List<Node> reachable; //Open
         List<Node> explored;  //Closed
         List<Node> path;
@@ -94,7 +140,7 @@ public class Pathfinding : MonoBehaviour
             if (node == targetNode)
             {
                 RetracePath(startNode, targetNode);
-                return;
+                break;
             }
 
             foreach (Node neighbour in grid.AddAdjacent(node))
@@ -115,6 +161,7 @@ public class Pathfinding : MonoBehaviour
                         reachable.Add(neighbour);
                 }
             }
+           
         }
     }
 
@@ -134,8 +181,7 @@ public class Pathfinding : MonoBehaviour
         path.Reverse();       
         grid.path = path;
 
-        //dm.wandering = true;
-
+        startFollowingPath = true;
     }
 
     IEnumerator FollowThePath()
@@ -161,25 +207,24 @@ public class Pathfinding : MonoBehaviour
                 yield break;
             }
 
-            //Reached the waypoint
-            if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, seeker.transform.position) <= 1f)
-            {
-                //startFollowingPath = false;
-                waypointIndex++;
-                Debug.Log(waypointIndex);
+            
 
-                target = Waypoint.waypoints[waypointIndex];
-                FindPath(seeker.position, target.position);
+            //test();
 
-                //startFollowingPath = true;
-                //StartCoroutine(FollowThePath());
+            //seeker.transform.LookAt(grid.path[i].worldPosition);
+            //seeker.transform.position = Vector3.Lerp(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed);
 
-                //Debug.Log((waypointIndex == Waypoint.waypoints.Length));
-                StopCoroutine("FollowThePath");
-            }
-           
-            seeker.transform.LookAt(grid.path[i].worldPosition);
-            seeker.transform.position = Vector3.Slerp(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed);
+            //seeker.transform.LookAt(target.transform.position);
+            //seeker.transform.position = Vector3.Lerp(seeker.transform.position, target.transform.position, walkingSpeed);
+
+            //Vector3 directionToWaypoint = (grid.path[i].worldPosition - seeker.transform.position);
+            //seeker.transform.Translate(directionToWaypoint * 0.2f);
+
+            startFollowingPath = true;
+
+            //seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed );
+
+            //if (Vector3.Distance(target.transform.position, seeker.transform.position) <= 0.1f)
             i++;
             yield return null;
         }
