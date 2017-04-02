@@ -76,7 +76,7 @@ public class DecisionMaking : MonoBehaviour
     void Update ()
     {
         //Wandering();
-        //watching();
+        watching();
         //sightVisualisation();
         //Debug.Log(aiState);
         switch (aiState)
@@ -171,12 +171,13 @@ public class DecisionMaking : MonoBehaviour
     public void Wandering()
     {
         //wandering = true;
-        watching();
-        //Debug.Log("wandering " + wandering);
+        //watching();
+        Debug.Log("wandering " + wandering);
         if (seen)
         {
-            //aiState = States.Seek;
-            //Debug.Log(aiState);            
+            Pathfinding.startFollowingPath = false;
+            aiState = States.Seek;
+            Debug.Log(aiState);            
         }
     }
     public void Searching()
@@ -186,8 +187,8 @@ public class DecisionMaking : MonoBehaviour
     public void Seeking()
     {
         //Debug.Log("I am now seeking the intruder");
-        //pathfinding.target = player.transform;
-        //pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
+        pathfinding.target = player.transform;
+        pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
 
     }
     public void Attacking()

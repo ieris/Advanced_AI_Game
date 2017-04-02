@@ -6,9 +6,8 @@ public class Pathfinding : MonoBehaviour
 {
     //Decision Making
     DecisionMaking dm;
-    private int i = 0;
 
-    public bool testState = false;
+    private int i = 0;
 
     //Waypoints
     Waypoint waypoint;
@@ -22,8 +21,7 @@ public class Pathfinding : MonoBehaviour
     public Transform target;
     public Transform player;
 
-    private bool drawingPath = false;
-    public bool startFollowingPath = false;
+    public static bool startFollowingPath = false;
 
     public Grid grid;
 
@@ -43,66 +41,95 @@ public class Pathfinding : MonoBehaviour
 
     void Update()
     {
-        //Debug.Log(target.transform.position);
-
         if (startFollowingPath == true)
         {
+            if (i == grid.path.Count)
+            {
+                i = 0;
+                waypointIndex++;
+                target = Waypoint.waypoints[waypointIndex];
+                FindPath(seeker.position, target.position);
+                //StartCoroutine("FollowThePath");
+            }
+
+            if (waypointIndex == Waypoint.waypoints.Length)
+            {
+                Debug.Log("ranOut");
+                waypointIndex = 0;
+                target = Waypoint.waypoints[waypointIndex];
+                FindPath(seeker.position, target.position);
+                //StopCoroutine("FollowThePath");
+            }
+            seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed * Time.deltaTime);
-            
-            if(Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
+            if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
             {
                 i++;
             }
+
         }
-
-        //Reached the waypoint
-        if (Vector3.Distance(Waypoint.waypoints[waypointIndex].transform.position, seeker.transform.position) <= 1f)
+        else
         {
-            //startFollowingPath = false;
-            waypointIndex++;
-            Debug.Log(waypointIndex);
-
-            target = Waypoint.waypoints[waypointIndex];
+            Debug.Log("not wandering anymore");
+            target = player.transform;
             FindPath(seeker.position, target.position);
+            startFollowingPath = true;
 
-            //startFollowingPath = true;
-            //StartCoroutine(FollowThePath());
-
-            //Debug.Log((waypointIndex == Waypoint.waypoints.Length));
-            StopCoroutine("FollowThePath");
         }
 
-        /*int i = 0;
-            //Vector3 directionToWaypoint = (grid.path[10].worldPosition - seeker.transform.position);
-            seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, target.transform.position, walkingSpeed*Time.deltaTime);
-            Debug.Log(seeker.transform.position);
+
+            /*if (startFollowingPath)
+            {
+                for (int i = 0; i < grid.path.Count; i++)
+                {
+                    seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed * Time.deltaTime);
+                }
+
+                startFollowingPath = false;
+                StopCoroutine("FollowThePath");
+                //Debug.Log("seeker position: " + seeker.transform.position);
+            }
+            else
+            {
+                StartCoroutine("FollowThePath");
+            }*/
+            //Debug.Log(target.transform.position);
+
+            /*if(startFollowingPath == true)
+            {
+                if (i == grid.path.Count - 1)
+                {
+                    Debug.Log("ran out of nodes");
+                    startFollowingPath = false;
+                    //i = 0;
+                    //waypointIndex++;
+                    StopCoroutine("FollowThePath");
+                    StartCoroutine("FollowThePath");
+                }
+
+                seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed * Time.deltaTime);
+                if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
+                {
+                    i++;
+                }
+            }*/
 
 
-        //if (Vector3.Distance(target.transform.position, seeker.transform.position) <= 0.1f) { }
-                //i++;
-                //Debug.Log(seeker.transform.position);
+            /*if (startFollowingPath == true)
+            {
+                if (i == grid.path.Count)
+                {
+                    i = 0;
+                    waypointIndex++;
+                    target = Waypoint.waypoints[waypointIndex];
+                    FindPath(seeker.position, target.position);
+                    StartCoroutine("FollowThePath");
+                }
+                //int i = 0;
+                //seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed * Time.deltaTime);
+            }*/
 
-    }*/
-        if (DecisionMaking.aiState == DecisionMaking.States.Seek)
-        {
-            //startFollowingPath = true;
-            //Debug.Log(DecisionMaking.aiState);
-            StopCoroutine("FollowThePath");
-            //StopCoroutine("FindPath");
-
-            //target.position = dm.player.transform.position;
-            //StartCoroutine(FindPath(seeker.position, target.position));
-
-            FindPath(seeker.position, player.position);
-            StartCoroutine("FollowThePath");
         }
-        if(DecisionMaking.aiState == DecisionMaking.States.Wander)
-        {
-            //dm.wandering = false;
-            //Debug.Log(dm.aiState);
-            StartCoroutine("FollowThePath");
-        }
-    }
 
     public void FindPath(Vector3 startPos, Vector3 targetPos)
     {
@@ -165,7 +192,6 @@ public class Pathfinding : MonoBehaviour
         }
     }
 
-
     void RetracePath(Node startNode, Node endNode)
     {
         List<Node> path = new List<Node>();
@@ -186,9 +212,9 @@ public class Pathfinding : MonoBehaviour
 
     IEnumerator FollowThePath()
     {
-        int i = 0;
+        /*int i = 0;
 
-        while(true)
+        while (true)
         {
 
             if (waypointIndex == Waypoint.waypoints.Length)
@@ -207,7 +233,7 @@ public class Pathfinding : MonoBehaviour
                 yield break;
             }
 
-            
+
 
             //test();
 
@@ -227,7 +253,8 @@ public class Pathfinding : MonoBehaviour
             //if (Vector3.Distance(target.transform.position, seeker.transform.position) <= 0.1f)
             i++;
             yield return null;
-        }
+        }*/
+        yield return null;
     }
 
 
