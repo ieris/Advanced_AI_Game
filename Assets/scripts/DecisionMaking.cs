@@ -28,16 +28,14 @@ public class DecisionMaking : MonoBehaviour
     public int health = 100;
     public int damage = 10;
     public float speed = 1.5f;
-    public int visionRadius = 10;
-    public int visionAngle = 60;
-    public int audioRange = 40;
+    public float visionRadius = 0.2f;
+    public float visionAngle = 60f;
+    public float audioRange = 20f;
     public float rotationSpeed = 0.2f;
     
     public static States aiState;
 
     public Transform player;
-    public Vector3 directionToPlayer;
-    public float distanceToTarget;
     public float angleToPlayer;
 
     public GameObject[] waypoints;
@@ -128,13 +126,14 @@ public class DecisionMaking : MonoBehaviour
         //And the player is not behind an obstacle, the guard can see the player
 
         visibleTargets.Clear();
-        distanceToTarget = Vector3.Distance(transform.position, player.position);
-        directionToPlayer = (player.position - transform.position);
+        float distanceToTarget = Vector3.Distance(transform.position, player.position);
+        Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius +  " distance " + distanceToTarget);
+        Vector3 directionToPlayer = (player.position - transform.position).normalized;
         angleToPlayer = Vector3.Angle(directionToPlayer, transform.forward);
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
         if (angleToPlayer < visionAngle / 2)
         {
-            if (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls))
+            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)))
             {
                 visibleTargets.Add(player);
 
@@ -165,14 +164,16 @@ public class DecisionMaking : MonoBehaviour
 
     public void sightVisualisation()
     {
+        var myAngle = visionRadius * Vector3.up;
 
+        Debug.DrawLine(transform.position, hit.point);
     }
 
     public void Wandering()
     {
         //wandering = true;
         //watching();
-        Debug.Log("wandering " + wandering);
+        //Debug.Log("wandering " + wandering);
         if (seen)
         {
             Pathfinding.startFollowingPath = false;
@@ -187,8 +188,8 @@ public class DecisionMaking : MonoBehaviour
     public void Seeking()
     {
         //Debug.Log("I am now seeking the intruder");
-        pathfinding.target = player.transform;
-        pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
+        //pathfinding.target = player.transform;
+        //pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
 
     }
     public void Attacking()
