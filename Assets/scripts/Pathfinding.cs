@@ -51,7 +51,6 @@ public class Pathfinding : MonoBehaviour
                 FindPath(seeker.position, target.position);
                 //StartCoroutine("FollowThePath");
             }
-
             if (waypointIndex == Waypoint.waypoints.Length)
             {
                 Debug.Log("ranOut");
@@ -60,6 +59,7 @@ public class Pathfinding : MonoBehaviour
                 FindPath(seeker.position, target.position);
                 //StopCoroutine("FollowThePath");
             }
+           
             seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed * Time.deltaTime);
             if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
@@ -68,12 +68,13 @@ public class Pathfinding : MonoBehaviour
             }
 
         }
-        else
+        else if (startFollowingPath == false && DecisionMaking.aiState == DecisionMaking.States.Seek)
         {
-            Debug.Log("not wandering anymore");
-            
-
+            target = player.transform;
+            FindPath(seeker.position, target.position);
+            startFollowingPath = true;
         }
+
 
 
             /*if (startFollowingPath)

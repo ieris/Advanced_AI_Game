@@ -34,9 +34,12 @@ public class DecisionMaking : MonoBehaviour
 
     //Pathfdinging
     Pathfinding pathfinding;
+    StationaryGuard statGuard;
 
     public bool wandering = false;
     public bool help = false;
+    public bool safe = false;
+
     //Sight
     public bool seen = false;
 
@@ -70,6 +73,7 @@ public class DecisionMaking : MonoBehaviour
     void Awake()
     {
         pathfinding = GetComponent<Pathfinding>();
+        statGuard = GetComponent<StationaryGuard>();
         aiState = States.Wander;
     }
 
@@ -80,6 +84,7 @@ public class DecisionMaking : MonoBehaviour
 	void Start ()
     {
         pathfinding = new Pathfinding();
+        statGuard = new StationaryGuard();
 
         lineRender = GetComponent<LineRenderer>();
         lineRender.SetWidth(0.05f, 0.05f);
@@ -136,7 +141,8 @@ public class DecisionMaking : MonoBehaviour
         Search,
         Seek,
         Attack,
-        Flee
+        Flee,
+        Dead
     }
 
     public void listening()
@@ -184,7 +190,7 @@ public class DecisionMaking : MonoBehaviour
 
         visibleTargets.Clear();
         float distanceToTarget = Vector3.Distance(transform.position, player.position);
-        Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius +  " distance " + distanceToTarget);
+        //Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius +  " distance " + distanceToTarget);
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
         angleToPlayer = Vector3.Angle(directionToPlayer, transform.forward);
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
@@ -232,7 +238,8 @@ public class DecisionMaking : MonoBehaviour
         //watching();
         //Debug.Log("wandering " + wandering);
         if (seen)
-        {         
+        {
+            Pathfinding.startFollowingPath = false;
             aiState = States.Seek;       
         }
     }
@@ -258,11 +265,15 @@ public class DecisionMaking : MonoBehaviour
 
         if(seen)
         {
-            Pathfinding.startFollowingPath = false;
-            transform.LookAt(lastSeenLocation);
-            pathfinding.target = lastSeenLocation.transform;
-            pathfinding.FindPath(transform.position, pathfinding.target.position);
-            Pathfinding.startFollowingPath = true;
+            if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
+            {
+                Pathfinding.startFollowingPath = false;
+                aiState = States.Attack;
+            }
+            else
+            {
+
+            }
         }
 
     }
@@ -284,13 +295,29 @@ public class DecisionMaking : MonoBehaviour
             Transform fleeLocation = transform;
             aiState = States.Flee;
         }
+
+        if(health <= 0)
+        {
+            Debug.Log("dead");
+
+        }
     }
     public void Fleeing()
     {
         help = true;
         pathfinding.target = stationaryGuard;
         pathfinding.FindPath(transform.position, pathfinding.target.position);
-        Pathfinding.startFollowingPath = true;        
+        Pathfinding.startFollowingPath = true;
+
+        Vector3 directionToStatGuard = (transform.position - stationaryGuard.position).normalized;
+        float distanceToStatGuard = Vector3.Distance(transform.position, stationaryGuard.position);
+
+        //In reach of stationary guard - safe area
+        if(Physics.Raycast(transform.position, directionToStatGuard) && distanceToStatGuard <= 2f)
+        {
+            safe = true;
+            StationaryGuard.aiState = StationaryGuard.States.Seek;
+        }  
     }
 
 }

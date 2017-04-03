@@ -38,8 +38,7 @@ public class StationaryGuard : MonoBehaviour
     //Sight
     public bool seen = false;
 
-
-    //public bool startFollowingPath = false;
+    public bool startFollowingPath = false;
 
     public LineRenderer lineRender;
     public LayerMask playerMask;
@@ -177,6 +176,10 @@ public class StationaryGuard : MonoBehaviour
     {
         //sightVisualisation();
 
+        //See if any guard in the area needs help
+        //RaycastHit guardHit;
+        //Vector3 directionToGuardHit = (guardHit.transform.position - transform.position).normalized;
+
         //Calculate the angle from guard to the player
         //If angle from guard to player is less than the field of view angle
         //And the player is not behind an obstacle, the guard can see the player
@@ -189,6 +192,7 @@ public class StationaryGuard : MonoBehaviour
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
         if (angleToPlayer < visionAngle / 2)
         {
+            //Player has been seen
             if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)))
             {
                 visibleTargets.Add(player);
