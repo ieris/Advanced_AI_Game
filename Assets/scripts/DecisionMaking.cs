@@ -6,6 +6,28 @@ using UnityEditor;
 
 public class DecisionMaking : MonoBehaviour
 {
+    //Hearing range zones
+    //Anything in zone one is guaranteed to be heard
+    //Anything in zone two has 75% chance to be heard
+    //Anything in zone three has 25% chance to be heard
+    private int zoneOne = 100;
+    private int zoneTwo = 75;
+    private int zoneThree = 25;
+    public float audioRangeZoneOne = 10f;
+    public float audioRangeZoneTwo = 15f;
+    public float audioRangeZoneThree = 20f;
+
+    private Vector3 lastHeardLocation;
+
+    //Guard ability
+    public int hitAccuracy = 60;
+    public int blockAccuracy = 20;
+    public float attackSpeed = 2.5f;
+
+    public int health = 100;
+    public int damage = 10;
+    public float speed = 1.5f;
+
     //Pathfdinging
     Pathfinding pathfinding;
 
@@ -25,12 +47,9 @@ public class DecisionMaking : MonoBehaviour
     public Transform aiPos;
     public List<Transform> visibleTargets = new List<Transform>();
 
-    public int health = 100;
-    public int damage = 10;
-    public float speed = 1.5f;
+    
     public float visionRadius = 0.2f;
-    public float visionAngle = 60f;
-    public float audioRange = 20f;
+    public float visionAngle = 60f;  
     public float rotationSpeed = 0.2f;
     
     public static States aiState;
@@ -116,6 +135,24 @@ public class DecisionMaking : MonoBehaviour
         Flee
     }
 
+    public void listening()
+    {
+        //Sound source is coming from zone one (guaranteed to be heard)
+        if(Vector3.Distance(transform.position, lastHeardLocation) <= audioRangeZoneOne)
+        {
+            aiState = States.Seek;
+        }
+        //Sound source is coming from zone two (75% chance to be heard)
+        else if ((Vector3.Distance(transform.position, lastHeardLocation) <= audioRangeZoneTwo) && (Vector3.Distance(transform.position, lastHeardLocation) > audioRangeZoneOne))
+        {
+
+        }
+        //Sound source is coming from zone three (25% chance to be heard)
+        else if ((Vector3.Distance(transform.position, lastHeardLocation) <= audioRangeZoneThree) && (Vector3.Distance(transform.position, lastHeardLocation) > audioRangeZoneTwo))
+        {
+
+        }
+    }
 
     public void watching()
     {
@@ -166,7 +203,7 @@ public class DecisionMaking : MonoBehaviour
     {
         var myAngle = visionRadius * Vector3.up;
 
-        Debug.DrawLine(transform.position, hit.point);
+        //Debug.DrawLine(transform.position, hit.point);
     }
 
     public void Wandering()
@@ -194,7 +231,15 @@ public class DecisionMaking : MonoBehaviour
     }
     public void Attacking()
     {
+        float hitSuccess;
 
+        //If guard is in range of the intruder
+        if(Vector3.Distance(transform.position, player.transform.position) <= 2f)
+        {
+            hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
+
+
+        }
     }
     public void Fleeing()
     {
