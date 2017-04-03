@@ -82,6 +82,7 @@ Assets/scripts/DecisionMaking.cs
 Assets/scripts/Grid.cs
 Assets/scripts/Node.cs
 Assets/scripts/Pathfinding.cs
+Assets/scripts/StationaryGuard.cs
 Assets/scripts/Waypoint.cs
 -r:"C:\Program Files\Unity\Editor\Data\Mono\lib\mono\unity\System.Runtime.Serialization.dll"
 -r:"C:\Program Files\Unity\Editor\Data\Mono\lib\mono\unity\System.Xml.Linq.dll"

@@ -71,9 +71,7 @@ public class Pathfinding : MonoBehaviour
         else
         {
             Debug.Log("not wandering anymore");
-            target = player.transform;
-            FindPath(seeker.position, target.position);
-            startFollowingPath = true;
+            
 
         }
 

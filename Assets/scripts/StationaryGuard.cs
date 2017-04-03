@@ -1,10 +1,8 @@
 ﻿using UnityEngine;
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 
-public class DecisionMaking : MonoBehaviour
+public class StationaryGuard : MonoBehaviour
 {
     //Hearing range zones
     //Anything in zone one is guaranteed to be heard
@@ -52,11 +50,11 @@ public class DecisionMaking : MonoBehaviour
     public Transform aiPos;
     public List<Transform> visibleTargets = new List<Transform>();
 
-    
+
     public float visionRadius = 0.2f;
-    public float visionAngle = 60f;  
+    public float visionAngle = 60f;
     public float rotationSpeed = 0.2f;
-    
+
     public static States aiState;
 
     public Transform player;
@@ -77,7 +75,7 @@ public class DecisionMaking : MonoBehaviour
     {
         sightVisualisation();
     }
-	void Start ()
+    void Start()
     {
         pathfinding = new Pathfinding();
 
@@ -95,7 +93,7 @@ public class DecisionMaking : MonoBehaviour
         return new Vector3(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), 0, Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
     }
 
-    void Update ()
+    void Update()
     {
         watching();
         //sightVisualisation();
@@ -136,12 +134,13 @@ public class DecisionMaking : MonoBehaviour
         Search,
         Seek,
         Attack,
-        Flee
+        Flee,
+        Dead
     }
 
     public void listening()
     {
-        float confidenceRating;       
+        float confidenceRating;
 
         //Sound source is coming from zone one (guaranteed to be heard)
         if (Vector3.Distance(transform.position, lastHeardLocation.position) <= audioRangeZoneOne)
@@ -155,7 +154,7 @@ public class DecisionMaking : MonoBehaviour
             confidenceRating = zoneTwoPercentage * (randomRating / 10);
 
             //Check if guard can hear it
-            if(confidenceRating >= guardHearing)
+            if (confidenceRating >= guardHearing)
             {
                 heard = true;
             }
@@ -184,7 +183,7 @@ public class DecisionMaking : MonoBehaviour
 
         visibleTargets.Clear();
         float distanceToTarget = Vector3.Distance(transform.position, player.position);
-        Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius +  " distance " + distanceToTarget);
+        Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius + " distance " + distanceToTarget);
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
         angleToPlayer = Vector3.Angle(directionToPlayer, transform.forward);
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
@@ -232,8 +231,8 @@ public class DecisionMaking : MonoBehaviour
         //watching();
         //Debug.Log("wandering " + wandering);
         if (seen)
-        {         
-            aiState = States.Seek;       
+        {
+            aiState = States.Seek;
         }
     }
     public void Searching()
@@ -246,7 +245,7 @@ public class DecisionMaking : MonoBehaviour
         //pathfinding.target = player.transform;
         //pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
 
-        if(heard)
+        if (heard)
         {
             //Look at the last heard location
             //Find path to that location
@@ -256,7 +255,7 @@ public class DecisionMaking : MonoBehaviour
             Pathfinding.startFollowingPath = true;
         }
 
-        if(seen)
+        if (seen)
         {
             Pathfinding.startFollowingPath = false;
             transform.LookAt(lastSeenLocation);
@@ -271,7 +270,7 @@ public class DecisionMaking : MonoBehaviour
         float hitSuccess;
 
         //If guard is in range of the intruder
-        if(Vector3.Distance(transform.position, player.transform.position) <= 2f)
+        if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
         {
             hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
 
@@ -279,10 +278,16 @@ public class DecisionMaking : MonoBehaviour
         }
 
         //If heavily injured, RUN
-        if(health <= 10)
+        if (health <= 10)
         {
             Transform fleeLocation = transform;
             aiState = States.Flee;
+        }
+
+        if (health <= 0)
+        {
+            Debug.Log("dead");
+
         }
     }
     public void Fleeing()
@@ -290,7 +295,6 @@ public class DecisionMaking : MonoBehaviour
         help = true;
         pathfinding.target = stationaryGuard;
         pathfinding.FindPath(transform.position, pathfinding.target.position);
-        Pathfinding.startFollowingPath = true;        
+        Pathfinding.startFollowingPath = true;
     }
-
 }
