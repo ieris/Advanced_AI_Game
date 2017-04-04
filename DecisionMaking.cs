@@ -22,6 +22,7 @@ public class DecisionMaking : MonoBehaviour
     public bool heard = false;
 
     private Vector3 lastSeenLocation;
+    private float searchTimer = 10f;
 
     //Guard ability
     public int hitAccuracy = 60;
@@ -55,11 +56,11 @@ public class DecisionMaking : MonoBehaviour
     public Transform aiPos;
     public List<Transform> visibleTargets = new List<Transform>();
 
-    
     public float visionRadius = 8f;
     public float visionAngle = 60f;  
     public float rotationSpeed = 0.2f;
-    
+    Vector3 randomDirection;
+
     public static States aiState;
 
     public Transform player;
@@ -89,6 +90,8 @@ public class DecisionMaking : MonoBehaviour
         lineRender = GetComponent<LineRenderer>();
         lineRender.SetWidth(0.05f, 0.05f);
         lineRender.SetColors(Color.red, Color.red);
+
+        randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
     }
 
     public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
@@ -218,17 +221,14 @@ public class DecisionMaking : MonoBehaviour
             }
             else
             {
-                Debug.Log("last seen location " + lastSeenLocation);
                 lineRender.SetVertexCount(0);
                 seen = false;
-                //Debug.Log("Not visible");
             }
         }
         else
         {
             seen = false;
             lineRender.SetVertexCount(0);
-            //Debug.Log("Not visible");
         }
 
         //sightVisualisation();
@@ -256,95 +256,77 @@ public class DecisionMaking : MonoBehaviour
     }
     public void Searching()
     {
-        float searchTimer = 10f;
+        Debug.Log(searchTimer);
 
         //Search state lasts 10 secs
         if (searchTimer >= 0)
         {
             Debug.Log(searchTimer);
             searchTimer -= Time.deltaTime;
-        }       
+        }
         else
         {
-            //If intruder is seen the timer is reset
-            if (seen)
-            {
-                aiState = States.Seek;
-                searchTimer = 10f;
-            }
-            //If intruder not seen
+            Debug.Log("Time to go back to work!");
+            aiState = States.Wander;
+        }       
+        //If intruder is seen the timer is reset
+        if (seen)
+        {
+            Debug.Log("INTRUDER!");
+            searchTimer = 10f;
+            aiState = States.Seek;           
+        }
+        //If intruder not seen
+        //Walk towards last seen location
+        //If nothing is seen
+        //Pick a random direction to walk in
+        else if(!seen)
+        {
+            //#Tergum <3
+
+            Debug.Log("Where was he last?");
+
             //Walk towards last seen location
-            //If nothing is seen
-            //Pick a random direction to walk in
-            else
+            if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 0.1f))
             {
-                //Debug.Log("last seen location: " + lastSeenLocation.position); #Tergum <3
-                
-                //Walk towards last seen location
                 transform.LookAt(lastSeenLocation);
                 transform.position = Vector3.MoveTowards(transform.position, lastSeenLocation, pathfinding.walkingSpeed * Time.deltaTime);
-
-                //Pick a random direction to walk in
-                if (!seen)
-                {
-                    Vector3 randomDirection = new Vector3(UnityEngine.Random.value, transform.position.y, UnityEngine.Random.value);
-                    
-                    RaycastHit hit;
-                    if (Physics.Raycast(transform.position, randomDirection, out hit))
-                    {
-                        if (hit.transform.CompareTag("Obstacle") && Vector3.Distance(transform.position, hit.point) <= 1f)
-                        {
-                            randomDirection = new Vector3(UnityEngine.Random.value, transform.position.y, UnityEngine.Random.value);
-                        }
-                    }
-
-                    transform.LookAt(randomDirection);
-                    transform.position = Vector3.MoveTowards(transform.position, randomDirection, pathfinding.walkingSpeed * Time.deltaTime);
-                }
+                
             }
+
+            Debug.Log("Random: " + randomDirection);
+            /*RaycastHit hit;
+            if (Physics.Raycast(transform.position, randomDirection, out hit))
+            {
+                Debug.Log("Can I walk here?");
+
+                if (hit.transform.CompareTag("Obstacle") && Vector3.Distance(transform.position, hit.point) <= 1f)
+                {
+                    Debug.Log("More suitable random direction");
+                    randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
+                }
+            }*/
+
+
+            if (!(Vector3.Distance(transform.position, randomDirection) >= 5f))
+            {
+                Debug.Log("Walk towards random direction");
+                transform.LookAt(randomDirection);
+                transform.position = Vector3.MoveTowards(transform.position, randomDirection, pathfinding.walkingSpeed * Time.deltaTime);            
+            }                      
         }
-
-        
-        
-        //Pathfinding.startFollowingPath = true;
-
     }
+
     public void Seeking()
     {
-        //Debug.Log("I am now seeking the intruder");
-        //pathfinding.target = player.transform;
-        //pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
-
         if(heard)
         {
-            //Look at the last heard location
-            //Find path to that location
-            /*transform.LookAt(lastHeardLocation);
-            pathfinding.target = lastHeardLocation;
-            pathfinding.FindPath(transform.position, lastHeardLocation.position);
-            Pathfinding.startFollowingPath = true;*/
+
         }
 
         if(seen)
         {
-            /*transform.LookAt(lastSeenLocation);
-            pathfinding.target = lastSeenLocation;
-            pathfinding.FindPath(transform.position, lastSeenLocation.position);
-            Pathfinding.startFollowingPath = true;*/
 
-
-
-
-            /*if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
-            {
-                Debug.Log("attack is being set inside seek");
-                Pathfinding.startFollowingPath = false;
-                aiState = States.Attack;
-            }
-            else
-            {
-
-            }*/
         }
 
     }
@@ -354,11 +336,9 @@ public class DecisionMaking : MonoBehaviour
 
         //If guard 
         //If guard is in range of the intruder
-        /*if(Vector3.Distance(transform.position, player.transform.position) <= 2f)
+        if(Vector3.Distance(transform.position, player.transform.position) <= 2f)
         {
             hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
-
-
         }
 
         //If heavily injured, RUN
@@ -372,7 +352,7 @@ public class DecisionMaking : MonoBehaviour
         {
             Debug.Log("dead");
 
-        }*/
+        }
     }
     public void Fleeing()
     {
@@ -388,8 +368,7 @@ public class DecisionMaking : MonoBehaviour
         if(Physics.Raycast(transform.position, directionToStatGuard) && distanceToStatGuard <= 2f)
         {
             safe = true;
-            StationaryGuard.aiState = StationaryGuard.States.Seek;
+            StationaryGuard.aiState = StationaryGuard.States.Search;
         }  
     }
-
 }
