@@ -17,10 +17,12 @@ public class DecisionMaking : MonoBehaviour
     public float audioRangeZoneTwo = 15f;
     public float audioRangeZoneThree = 20f;
 
+    private float confidenceRating;
     private Transform lastHeardLocation;
     private int guardHearing = 40;
     public bool heard = false;
 
+    private float randomRating;
     private Vector3 lastSeenLocation;
     private float searchTimer = 10f;
 
@@ -36,6 +38,7 @@ public class DecisionMaking : MonoBehaviour
     //Pathfdinging
     Pathfinding pathfinding;
     StationaryGuard statGuard;
+    Player playerGameObj;
 
     public bool wandering = false;
     public bool help = false;
@@ -62,6 +65,7 @@ public class DecisionMaking : MonoBehaviour
     public float rotationSpeed = 0.2f;
     Vector3 randomDirection;
 
+
     public static States aiState;
 
     public Transform player;
@@ -76,6 +80,7 @@ public class DecisionMaking : MonoBehaviour
     {
         pathfinding = GetComponent<Pathfinding>();
         statGuard = GetComponent<StationaryGuard>();
+        playerGameObj = GetComponent<Player>();
         aiState = States.Wander;
     }
 
@@ -87,10 +92,13 @@ public class DecisionMaking : MonoBehaviour
     {
         pathfinding = new Pathfinding();
         statGuard = new StationaryGuard();
+        playerGameObj = new Player();
 
         lineRender = GetComponent<LineRenderer>();
         lineRender.SetWidth(0.05f, 0.05f);
         lineRender.SetColors(Color.red, Color.red);
+
+        randomRating = UnityEngine.Random.Range(1.0f, 10.0f);
 
         randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
         Debug.Log(transform.position.y);
@@ -108,7 +116,7 @@ public class DecisionMaking : MonoBehaviour
     void Update()
     {
         watching();
-        //listening();
+        listening();
         //sightVisualisation();
 
         switch (aiState)
@@ -153,43 +161,77 @@ public class DecisionMaking : MonoBehaviour
 
     public void listening()
     {
-        float confidenceRating;
+        Debug.Log(heard);
+        float distanceToTarget = Vector3.Distance(transform.position, player.position);
 
         //Sound source is coming from zone one (guaranteed to be heard)
-        if (Vector3.Distance(transform.position, lastHeardLocation.position) <= audioRangeZoneOne)
+        //But only if player is not sneaking
+        if (distanceToTarget <= audioRangeZoneOne)
         {
-            aiState = States.Seek;
+            if(Player.sneaking == false)
+            {
+                //Debug.Log("Who goes there?");
+                //Debug.Log("Heard!");
+                heard = true;
+                aiState = States.Seek;
+            }         
         }
         //Sound source is coming from zone two (75% chance to be heard)
-        else if ((Vector3.Distance(transform.position, lastHeardLocation.position) <= audioRangeZoneTwo) && (Vector3.Distance(transform.position, lastHeardLocation.position) > audioRangeZoneOne))
+        //Guaranteed to be heard if running
+        else if ((distanceToTarget <= audioRangeZoneTwo) && (distanceToTarget > audioRangeZoneOne))
         {
-            float randomRating = UnityEngine.Random.Range(1.0f, 10.0f);
-            confidenceRating = zoneTwoPercentage * (randomRating / 10);
-
-            //Check if guard can hear it
-            if (confidenceRating >= guardHearing)
+            if (Player.sneaking == false)
             {
-                heard = true;
+                confidenceRating = zoneTwoPercentage * (randomRating / 10);
+
+                //Debug.Log("confidence raring: " + confidenceRating);
+                //Check if guard can hear it
+                if (confidenceRating >= guardHearing)
+                {
+                    heard = true;
+                    //Debug.Log("Heard!");
+                }
             }
+
+            if(Player.running == true)
+            {
+                //Debug.Log("Who goes there?");
+                heard = true;
+                //Debug.Log("Heard!");
+                aiState = States.Seek;
+            }
+
+            
         }
         //Sound source is coming from zone three (25% chance to be heard)
-        else if ((Vector3.Distance(transform.position, lastHeardLocation.position) <= audioRangeZoneThree) && (Vector3.Distance(transform.position, lastHeardLocation.position) > audioRangeZoneTwo))
+        else if ((distanceToTarget <= audioRangeZoneThree) && (distanceToTarget > audioRangeZoneTwo))
         {
-            float randomRating = UnityEngine.Random.Range(1.0f, 10.0f);
-            confidenceRating = zoneThreePercentage * (randomRating / 10);
-
-            //Check if guard can hear it
-            if (confidenceRating >= guardHearing)
+            if(Player.sneaking == false)
             {
-                heard = true;
+                confidenceRating = zoneThreePercentage * (randomRating / 10);
+                Debug.Log("confidence raring: " + confidenceRating);
+
+                //Check if guard can hear it
+                if (confidenceRating >= guardHearing)
+                {
+                    heard = true;
+                }
             }
+            if (Player.running == true)
+            {
+                Debug.Log("Who goes there?");
+                heard = true;
+                aiState = States.Seek;
+            }           
+        }
+        else
+        {
+            heard = false;
         }
     }
 
     public void watching()
     {
-        //sightVisualisation();
-
         //Calculate the angle from guard to the player
         //If angle from guard to player is less than the field of view angle
         //And the player is not behind an obstacle, the guard can see the player
@@ -237,19 +279,13 @@ public class DecisionMaking : MonoBehaviour
 
     }
 
-
     public void sightVisualisation()
     {
         var myAngle = visionRadius * Vector3.up;
-
-        //Debug.DrawLine(transform.position, hit.point);
     }
 
     public void Wandering()
     {
-        //wandering = true;
-        //watching();
-        //Debug.Log("wandering " + wandering);
         if (seen)
         {
             Pathfinding.startFollowingPath = false;
@@ -317,38 +353,24 @@ public class DecisionMaking : MonoBehaviour
                         //Debug.Log("Chose a more suitable random direction");
                         randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
                     }
-                    else
-                    {
-
-                    }
                 }
             }
             else if (Vector3.Distance(transform.position, randomDirection) <= 5f)
             {
                 randomFinished = true;
             }
-            }
+        }
 
-            if(randomFinished == true)
-            {
-                randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
-                //Debug.Log("Random2: " + randomDirection);
-                randomFinished = false;
-            }           
+        if(randomFinished == true)
+        {
+            randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
+            randomFinished = false;
+        }           
         
     }
 
     public void Seeking()
     {
-        if (heard)
-        {
-
-        }
-
-        if (seen)
-        {
-
-        }
 
     }
     public void Attacking()
