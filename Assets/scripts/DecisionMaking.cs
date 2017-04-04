@@ -54,6 +54,7 @@ public class DecisionMaking : MonoBehaviour
     public LineRenderer lineRender;
     public LayerMask playerMask;
     public LayerMask walls;
+    //public LayerMask visionMask;
 
     public Transform stationaryGuard;
     public Transform head;
@@ -116,7 +117,7 @@ public class DecisionMaking : MonoBehaviour
     void Update()
     {
         watching();
-        listening();
+        //listening();
         //sightVisualisation();
 
         switch (aiState)
@@ -161,7 +162,7 @@ public class DecisionMaking : MonoBehaviour
 
     public void listening()
     {
-        Debug.Log(heard);
+        //Debug.Log(heard);
         float distanceToTarget = Vector3.Distance(transform.position, player.position);
 
         //Sound source is coming from zone one (guaranteed to be heard)
@@ -244,8 +245,9 @@ public class DecisionMaking : MonoBehaviour
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
         if (angleToPlayer < visionAngle / 2)
         {
-            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)))
+            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)) )
             {
+                //&& (Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, visionMask))
                 visibleTargets.Add(player);
 
                 lineRender.SetVertexCount(2);
