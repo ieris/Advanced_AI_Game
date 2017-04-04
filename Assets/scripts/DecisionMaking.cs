@@ -54,7 +54,7 @@ public class DecisionMaking : MonoBehaviour
     public LineRenderer lineRender;
     public LayerMask playerMask;
     public LayerMask walls;
-    //public LayerMask visionMask;
+    public LayerMask visionMask;
 
     public Transform stationaryGuard;
     public Transform head;
@@ -243,11 +243,11 @@ public class DecisionMaking : MonoBehaviour
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
         angleToPlayer = Vector3.Angle(directionToPlayer, transform.forward);
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
+        //Collider[] lightsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, visionMask);
         if (angleToPlayer < visionAngle / 2)
         {
-            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)) )
+            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)) && Player.visibleInLight == true)
             {
-                //&& (Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, visionMask))
                 visibleTargets.Add(player);
 
                 lineRender.SetVertexCount(2);

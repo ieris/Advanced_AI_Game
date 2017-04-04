@@ -5,14 +5,12 @@ public class Player : MonoBehaviour
 {
     public static bool sneaking = false;
     public static bool running = false;
+    public static bool visibleInLight = false;
 
-	void Start ()
-    {
-	
-	}
 
 	void Update ()
     {
+        Debug.Log(visibleInLight);
         //Attacking
         if (Input.GetMouseButtonDown(0))
         {
