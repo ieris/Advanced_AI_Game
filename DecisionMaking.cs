@@ -21,7 +21,7 @@ public class DecisionMaking : MonoBehaviour
     private int guardHearing = 40;
     public bool heard = false;
 
-    private Transform lastSeenLocation;
+    private Vector3 lastSeenLocation;
 
     //Guard ability
     public int hitAccuracy = 60;
@@ -103,6 +103,7 @@ public class DecisionMaking : MonoBehaviour
     void Update ()
     {
         watching();
+        //listening();
         //sightVisualisation();
 
         switch (aiState)
@@ -204,10 +205,20 @@ public class DecisionMaking : MonoBehaviour
                 lineRender.SetPosition(0, transform.position);
                 lineRender.SetPosition(1, player.position);
 
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, directionToPlayer, out hit))
+                {
+                    if (hit.transform.CompareTag("Player"))
+                    {
+                        lastSeenLocation = hit.point;
+                    }
+                }
+
                 seen = true;
             }
             else
             {
+                Debug.Log("last seen location " + lastSeenLocation);
                 lineRender.SetVertexCount(0);
                 seen = false;
                 //Debug.Log("Not visible");
@@ -245,6 +256,20 @@ public class DecisionMaking : MonoBehaviour
     }
     public void Searching()
     {
+        if(seen)
+        {
+            aiState = States.Seek;
+        }
+
+        else
+        {
+            //Debug.Log("last seen location: " + lastSeenLocation.position);
+            transform.LookAt(lastSeenLocation);
+            pathfinding.target.position = lastSeenLocation;
+            pathfinding.FindPath(transform.position, lastSeenLocation);
+        }
+        
+        //Pathfinding.startFollowingPath = true;
 
     }
     public void Seeking()
@@ -257,23 +282,32 @@ public class DecisionMaking : MonoBehaviour
         {
             //Look at the last heard location
             //Find path to that location
-            transform.LookAt(lastHeardLocation);
+            /*transform.LookAt(lastHeardLocation);
             pathfinding.target = lastHeardLocation;
             pathfinding.FindPath(transform.position, lastHeardLocation.position);
-            Pathfinding.startFollowingPath = true;
+            Pathfinding.startFollowingPath = true;*/
         }
 
         if(seen)
         {
-            if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
+            /*transform.LookAt(lastSeenLocation);
+            pathfinding.target = lastSeenLocation;
+            pathfinding.FindPath(transform.position, lastSeenLocation.position);
+            Pathfinding.startFollowingPath = true;*/
+
+
+
+
+            /*if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
             {
+                Debug.Log("attack is being set inside seek");
                 Pathfinding.startFollowingPath = false;
                 aiState = States.Attack;
             }
             else
             {
 
-            }
+            }*/
         }
 
     }

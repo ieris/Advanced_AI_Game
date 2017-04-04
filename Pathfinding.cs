@@ -71,8 +71,8 @@ public class Pathfinding : MonoBehaviour
         }
         else if (startFollowingPath == false && DecisionMaking.aiState == DecisionMaking.States.Seek)
         {
-            target = player.transform;
-            FindPath(seeker.position, target.position);
+            //target = player.transform;
+            //FindPath(seeker.position, target.position);
             startFollowingPath = true;
         }
         else if (startFollowingPath == true && DecisionMaking.aiState == DecisionMaking.States.Seek)
@@ -96,7 +96,6 @@ public class Pathfinding : MonoBehaviour
         else if (startFollowingPath == false && DecisionMaking.aiState == DecisionMaking.States.Attack)
         {
             
-
             //He is now out of attack range, get in range again
             if (!(Vector3.Distance(seeker.transform.position, player.transform.position) <= 4f))
             {
@@ -120,9 +119,8 @@ public class Pathfinding : MonoBehaviour
             if(Vector3.Distance(seeker.transform.position, player.transform.position) > dm.visionRadius)
             {
                 Debug.Log("I lost him!");
-                startFollowingPath = true;
-                DecisionMaking.aiState = DecisionMaking.States.Wander;
-
+                //startFollowingPath = true;
+                DecisionMaking.aiState = DecisionMaking.States.Search;
             }
         }
 
