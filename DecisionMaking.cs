@@ -256,18 +256,55 @@ public class DecisionMaking : MonoBehaviour
     }
     public void Searching()
     {
-        if(seen)
-        {
-            aiState = States.Seek;
-        }
+        float searchTimer = 10f;
 
+        //Search state lasts 10 secs
+        if (searchTimer >= 0)
+        {
+            Debug.Log(searchTimer);
+            searchTimer -= Time.deltaTime;
+        }       
         else
         {
-            //Debug.Log("last seen location: " + lastSeenLocation.position);
-            transform.LookAt(lastSeenLocation);
-            pathfinding.target.position = lastSeenLocation;
-            pathfinding.FindPath(transform.position, lastSeenLocation);
+            //If intruder is seen the timer is reset
+            if (seen)
+            {
+                aiState = States.Seek;
+                searchTimer = 10f;
+            }
+            //If intruder not seen
+            //Walk towards last seen location
+            //If nothing is seen
+            //Pick a random direction to walk in
+            else
+            {
+                //Debug.Log("last seen location: " + lastSeenLocation.position); #Tergum <3
+                
+                //Walk towards last seen location
+                transform.LookAt(lastSeenLocation);
+                transform.position = Vector3.MoveTowards(transform.position, lastSeenLocation, pathfinding.walkingSpeed * Time.deltaTime);
+
+                //Pick a random direction to walk in
+                if (!seen)
+                {
+                    Vector3 randomDirection = new Vector3(UnityEngine.Random.value, transform.position.y, UnityEngine.Random.value);
+                    
+                    RaycastHit hit;
+                    if (Physics.Raycast(transform.position, randomDirection, out hit))
+                    {
+                        if (hit.transform.CompareTag("Obstacle") && Vector3.Distance(transform.position, hit.point) <= 1f)
+                        {
+                            randomDirection = new Vector3(UnityEngine.Random.value, transform.position.y, UnityEngine.Random.value);
+                        }
+                    }
+
+                    transform.LookAt(randomDirection);
+                    transform.position = Vector3.MoveTowards(transform.position, randomDirection, pathfinding.walkingSpeed * Time.deltaTime);
+                }
+            }
         }
+
+        
         
         //Pathfinding.startFollowingPath = true;
 
