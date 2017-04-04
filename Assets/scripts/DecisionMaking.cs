@@ -21,7 +21,8 @@ public class DecisionMaking : MonoBehaviour
     private int guardHearing = 40;
     public bool heard = false;
 
-    private Transform lastSeenLocation;
+    private Vector3 lastSeenLocation;
+    private float searchTimer = 10f;
 
     //Guard ability
     public int hitAccuracy = 60;
@@ -42,7 +43,8 @@ public class DecisionMaking : MonoBehaviour
 
     //Sight
     public bool seen = false;
-
+    private bool lastLocationChecked = false;
+    private bool randomFinished = false;
 
     //public bool startFollowingPath = false;
 
@@ -55,11 +57,11 @@ public class DecisionMaking : MonoBehaviour
     public Transform aiPos;
     public List<Transform> visibleTargets = new List<Transform>();
 
-    
-    public float visionRadius = 0.2f;
-    public float visionAngle = 60f;  
+    public float visionRadius = 8f;
+    public float visionAngle = 60f;
     public float rotationSpeed = 0.2f;
-    
+    Vector3 randomDirection;
+
     public static States aiState;
 
     public Transform player;
@@ -81,7 +83,7 @@ public class DecisionMaking : MonoBehaviour
     {
         sightVisualisation();
     }
-	void Start ()
+    void Start()
     {
         pathfinding = new Pathfinding();
         statGuard = new StationaryGuard();
@@ -89,6 +91,9 @@ public class DecisionMaking : MonoBehaviour
         lineRender = GetComponent<LineRenderer>();
         lineRender.SetWidth(0.05f, 0.05f);
         lineRender.SetColors(Color.red, Color.red);
+
+        randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
+        Debug.Log(transform.position.y);
     }
 
     public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
@@ -100,9 +105,10 @@ public class DecisionMaking : MonoBehaviour
         return new Vector3(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), 0, Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
     }
 
-    void Update ()
+    void Update()
     {
         watching();
+        //listening();
         //sightVisualisation();
 
         switch (aiState)
@@ -147,7 +153,7 @@ public class DecisionMaking : MonoBehaviour
 
     public void listening()
     {
-        float confidenceRating;       
+        float confidenceRating;
 
         //Sound source is coming from zone one (guaranteed to be heard)
         if (Vector3.Distance(transform.position, lastHeardLocation.position) <= audioRangeZoneOne)
@@ -161,7 +167,7 @@ public class DecisionMaking : MonoBehaviour
             confidenceRating = zoneTwoPercentage * (randomRating / 10);
 
             //Check if guard can hear it
-            if(confidenceRating >= guardHearing)
+            if (confidenceRating >= guardHearing)
             {
                 heard = true;
             }
@@ -204,20 +210,27 @@ public class DecisionMaking : MonoBehaviour
                 lineRender.SetPosition(0, transform.position);
                 lineRender.SetPosition(1, player.position);
 
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, directionToPlayer, out hit))
+                {
+                    if (hit.transform.CompareTag("Player"))
+                    {
+                        lastSeenLocation = hit.point;
+                    }
+                }
+
                 seen = true;
             }
             else
             {
                 lineRender.SetVertexCount(0);
                 seen = false;
-                //Debug.Log("Not visible");
             }
         }
         else
         {
             seen = false;
             lineRender.SetVertexCount(0);
-            //Debug.Log("Not visible");
         }
 
         //sightVisualisation();
@@ -240,40 +253,101 @@ public class DecisionMaking : MonoBehaviour
         if (seen)
         {
             Pathfinding.startFollowingPath = false;
-            aiState = States.Seek;       
+            aiState = States.Seek;
         }
     }
     public void Searching()
     {
+        //Search state lasts 10 secs
+        if (searchTimer >= 0)
+        {
+            searchTimer -= Time.deltaTime;
+        }
+        else
+        {
+            Debug.Log("Time to go back to work!");
+            Pathfinding.startFollowingPath = true;
+            aiState = States.Wander;
+            lastLocationChecked = false;
+            searchTimer = 10f;
+        }
+        //If intruder is seen the timer is reset
+        if (seen)
+        {
+            Debug.Log("INTRUDER!");
+            searchTimer = 10f;
+            aiState = States.Seek;
+            lastLocationChecked = false;
+        }
+        //If intruder not seen
+        //Walk towards last seen location
+        //If nothing is seen
+        //Pick a random direction to walk in
+        else if (!seen && lastLocationChecked == false)
+        {
+            //#Tergum <3
 
+            Debug.Log("Where was he last?");
+
+            //Walk towards last seen location
+            if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 0.1f))
+            {
+                transform.LookAt(lastSeenLocation);
+                transform.position = Vector3.MoveTowards(transform.position, lastSeenLocation, pathfinding.walkingSpeed * Time.deltaTime);
+            }
+            else if (Vector3.Distance(transform.position, lastSeenLocation) <= 0.1f)
+            {
+                lastLocationChecked = true;
+            }
+            
+        }
+        else if(!seen && lastLocationChecked == true)
+        { 
+            if (!(Vector3.Distance(transform.position, randomDirection) <= 5f))
+            {
+                Debug.Log("Walk towards random direction");
+                transform.LookAt(randomDirection);
+                transform.position = Vector3.MoveTowards(transform.position, randomDirection, pathfinding.walkingSpeed * Time.deltaTime);
+
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, randomDirection, out hit))
+                {
+                    if (hit.transform.CompareTag("Obstacle") && Vector3.Distance(transform.position, hit.point) <= 1f)
+                    {
+                        //Debug.Log("Chose a more suitable random direction");
+                        randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+            else if (Vector3.Distance(transform.position, randomDirection) <= 5f)
+            {
+                randomFinished = true;
+            }
+            }
+
+            if(randomFinished == true)
+            {
+                randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
+                //Debug.Log("Random2: " + randomDirection);
+                randomFinished = false;
+            }           
+        
     }
+
     public void Seeking()
     {
-        //Debug.Log("I am now seeking the intruder");
-        //pathfinding.target = player.transform;
-        //pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
-
-        if(heard)
+        if (heard)
         {
-            //Look at the last heard location
-            //Find path to that location
-            transform.LookAt(lastHeardLocation);
-            pathfinding.target = lastHeardLocation;
-            pathfinding.FindPath(transform.position, lastHeardLocation.position);
-            Pathfinding.startFollowingPath = true;
+
         }
 
-        if(seen)
+        if (seen)
         {
-            if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
-            {
-                Pathfinding.startFollowingPath = false;
-                aiState = States.Attack;
-            }
-            else
-            {
 
-            }
         }
 
     }
@@ -281,22 +355,21 @@ public class DecisionMaking : MonoBehaviour
     {
         float hitSuccess;
 
+        //If guard 
         //If guard is in range of the intruder
-        if(Vector3.Distance(transform.position, player.transform.position) <= 2f)
+        if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
         {
             hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
-
-
         }
 
         //If heavily injured, RUN
-        if(health <= 10)
+        if (health <= 10)
         {
             Transform fleeLocation = transform;
             aiState = States.Flee;
         }
 
-        if(health <= 0)
+        if (health <= 0)
         {
             Debug.Log("dead");
 
@@ -313,11 +386,10 @@ public class DecisionMaking : MonoBehaviour
         float distanceToStatGuard = Vector3.Distance(transform.position, stationaryGuard.position);
 
         //In reach of stationary guard - safe area
-        if(Physics.Raycast(transform.position, directionToStatGuard) && distanceToStatGuard <= 2f)
+        if (Physics.Raycast(transform.position, directionToStatGuard) && distanceToStatGuard <= 2f)
         {
             safe = true;
-            StationaryGuard.aiState = StationaryGuard.States.Seek;
-        }  
+            StationaryGuard.aiState = StationaryGuard.States.Search;
+        }
     }
-
 }
