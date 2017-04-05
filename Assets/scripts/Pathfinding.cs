@@ -21,6 +21,7 @@ public class Pathfinding : MonoBehaviour
     public Transform seeker;
     public Transform target;
     public Transform player;
+    public Transform stationaryGuard;
 
     public static bool startFollowingPath = false;
 
@@ -42,6 +43,28 @@ public class Pathfinding : MonoBehaviour
 
     void Update()
     {
+        if (DecisionMaking.aiState == DecisionMaking.States.Flee)
+        {
+            if(target != null)
+            {
+                Debug.Log("Fleeeeeeeee!1111");
+                Debug.Log(target.position);
+                target = null;
+            }
+
+            target = stationaryGuard;
+            FindPath(seeker.position, target.position);
+
+            Debug.Log("Fleeeeeeeee!");
+            Debug.Log(target.position);
+            seeker.transform.LookAt(grid.path[i].worldPosition);
+            seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
+
+            if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
+            {
+                i++;
+            }
+        }
         if (startFollowingPath == true && DecisionMaking.aiState == DecisionMaking.States.Wander)
         {
             if (i == grid.path.Count)
@@ -122,11 +145,12 @@ public class Pathfinding : MonoBehaviour
                 DecisionMaking.aiState = DecisionMaking.States.Search;
             }
         }
+        
     }
 
     public void FindPath(Vector3 startPos, Vector3 targetPos)
     {
-        Debug.Log("findpath");
+        //Debug.Log("findpath");
         List<Node> reachable; //Open
         List<Node> explored;  //Closed
         List<Node> path;

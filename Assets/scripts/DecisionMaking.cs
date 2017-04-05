@@ -31,7 +31,7 @@ public class DecisionMaking : MonoBehaviour
     //Guard ability
     public int hitAccuracy = 60;
     public int blockAccuracy = 20;
-    public float attackSpeed = 1f;
+    public float attackSpeed = 0f;
 
     public int health = 100;
     public int damage = 10;
@@ -84,7 +84,7 @@ public class DecisionMaking : MonoBehaviour
     void Awake()
     {
         pathfinding = GetComponent<Pathfinding>();
-        statGuard = GetComponent<StationaryGuard>();
+        //statGuard = GetComponent<StationaryGuard>();
         playerGameObj = GetComponent<Player>();
         aiState = States.Wander;
     }
@@ -97,7 +97,7 @@ public class DecisionMaking : MonoBehaviour
     {
         anim = GetComponent<Animator>();
         pathfinding = new Pathfinding();
-        statGuard = new StationaryGuard();
+        //statGuard = new StationaryGuard();
         playerGameObj = new Player();
 
         lineRender = GetComponent<LineRenderer>();
@@ -126,7 +126,10 @@ public class DecisionMaking : MonoBehaviour
 
     void Update()
     {
-        watching();
+        if(aiState != States.Flee)
+        {
+            watching();
+        }   
         //listening();
         //sightVisualisation();
 
@@ -390,18 +393,21 @@ public class DecisionMaking : MonoBehaviour
     }
     public void Attacking()
     {
-        if (attackSpeed >= 0)
+        if (attackSpeed <= 1)
         {
-            attackSpeed -= Time.deltaTime;
+            
+            attackSpeed += Time.deltaTime;
         }
         else
         {
             anim.Play("attack");
-            attackSpeed = 1f;
+            attackSpeed = 0f;
 
             if (this.anim.GetCurrentAnimatorStateInfo(0).IsName("attack"))
             {
                 Debug.Log("Animation stopped playing");
+                Player.health -= damage;
+                Debug.Log("health: " + Player.health);
             }
             float hitSuccess;
 
@@ -413,9 +419,8 @@ public class DecisionMaking : MonoBehaviour
             }
 
             //If heavily injured, RUN
-            if (health <= 10)
+            if (health == 10)
             {
-                anim.Play("hurt");
                 Transform fleeLocation = transform;
                 aiState = States.Flee;
             }
@@ -430,20 +435,33 @@ public class DecisionMaking : MonoBehaviour
 
     public void Fleeing()
     {
-        anim.Play("run");
-        help = true;
-        pathfinding.target = stationaryGuard;
-        pathfinding.FindPath(transform.position, pathfinding.target.position);
-        Pathfinding.startFollowingPath = true;
+        //anim.Play("run");
+        //Debug.Log("fleeing" + stationaryGuard.transform.position);
+        Pathfinding.startFollowingPath = false;        
 
-        Vector3 directionToStatGuard = (transform.position - stationaryGuard.position).normalized;
+        //pathfinding.waypointIndex = 0;
+        //help = true;
+
+        /*Vector3 directionToStatGuard = (transform.position - stationaryGuard.position).normalized;
         float distanceToStatGuard = Vector3.Distance(transform.position, stationaryGuard.position);
 
+        Debug.Log(directionToStatGuard);
+        Debug.Log(distanceToStatGuard);*/
+
         //In reach of stationary guard - safe area
-        if (Physics.Raycast(transform.position, directionToStatGuard) && distanceToStatGuard <= 2f)
-        {
+
+        if (!(Vector3.Distance(transform.position, stationaryGuard.position) <= 5f))
+        {            
+            pathfinding.target = stationaryGuard;
+            //Debug.Log("fleeing" + pathfinding.target.transform.position);
+            pathfinding.FindPath(transform.position, stationaryGuard.transform.position);
+            Pathfinding.startFollowingPath = true;
+        }
+
+        /*if (Physics.Raycast(transform.position, directionToStatGuard) && distanceToStatGuard <= 2f)
+        {                      
             safe = true;
             StationaryGuard.aiState = StationaryGuard.States.Search;
-        }
+        }*/
     }
 }
