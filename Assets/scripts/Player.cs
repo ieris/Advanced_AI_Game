@@ -10,7 +10,7 @@ public class Player : MonoBehaviour
 
 	void Update ()
     {
-        Debug.Log(visibleInLight);
+        //Debug.Log(visibleInLight);
         //Attacking
         if (Input.GetMouseButtonDown(0))
         {

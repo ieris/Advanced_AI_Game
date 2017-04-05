@@ -3,31 +3,20 @@ using System.Collections;
 
 public class Light : MonoBehaviour
 {
-    public Transform player;
 
-
-	void Start ()
+    void OnTriggerEnter(Collider col)
     {
-
-	}
-
-	void Update ()
-    {
-
-	}
-
-    void onTriggerEnter(Collider col)
-    {
-        if(col.gameObject.tag == "Player")
+        if(col.gameObject.tag == "Light")
         {
+            print("Entered");
             Player.visibleInLight = true;
-        }
+        }       
     }
-
-    void onTriggerExit(Collider col)
+    void OnTriggerExit(Collider col)
     {
-        if (col.gameObject.tag == "Player")
+        if (col.gameObject.tag == "Light")
         {
+            print("Exited");
             Player.visibleInLight = false;
         }
     }
