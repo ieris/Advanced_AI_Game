@@ -62,7 +62,7 @@ public class Pathfinding : MonoBehaviour
             }
 
             seeker.transform.LookAt(grid.path[i].worldPosition);
-            seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, grid.path[i].worldPosition, walkingSpeed * Time.deltaTime);
+            seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
             if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
             {
                 i++;
@@ -83,7 +83,7 @@ public class Pathfinding : MonoBehaviour
             if (!(Vector3.Distance(seeker.transform.position, player.transform.position) <= 4f))
             {
                 seeker.transform.LookAt(player.position);
-                seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, player.position, walkingSpeed * Time.deltaTime);
+                seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(player.position.x, 0, player.position.z), walkingSpeed * Time.deltaTime);
             }
             //In range
             else
@@ -119,7 +119,6 @@ public class Pathfinding : MonoBehaviour
             if (Vector3.Distance(seeker.transform.position, player.transform.position) > dm.visionRadius)
             {
                 Debug.Log("I lost him!");
-                //startFollowingPath = true;
                 DecisionMaking.aiState = DecisionMaking.States.Search;
             }
         }

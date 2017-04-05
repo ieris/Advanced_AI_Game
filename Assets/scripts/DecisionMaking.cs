@@ -6,6 +6,8 @@ using UnityEditor;
 
 public class DecisionMaking : MonoBehaviour
 {
+    public Animator anim;
+
     //Hearing range zones
     //Anything in zone one is guaranteed to be heard
     //Anything in zone two has 75% chance to be heard
@@ -29,7 +31,7 @@ public class DecisionMaking : MonoBehaviour
     //Guard ability
     public int hitAccuracy = 60;
     public int blockAccuracy = 20;
-    public float attackSpeed = 2.5f;
+    public float attackSpeed = 1f;
 
     public int health = 100;
     public int damage = 10;
@@ -55,6 +57,8 @@ public class DecisionMaking : MonoBehaviour
     public LayerMask playerMask;
     public LayerMask walls;
     public LayerMask visionMask;
+    public LayerMask guardMask;
+    public LayerMask lightMast;
 
     public Transform stationaryGuard;
     public Transform head;
@@ -91,6 +95,7 @@ public class DecisionMaking : MonoBehaviour
     }
     void Start()
     {
+        anim = GetComponent<Animator>();
         pathfinding = new Pathfinding();
         statGuard = new StationaryGuard();
         playerGameObj = new Player();
@@ -112,6 +117,11 @@ public class DecisionMaking : MonoBehaviour
             angleInDegrees += transform.eulerAngles.y;
         }
         return new Vector3(Mathf.Sin(angleInDegrees * Mathf.Deg2Rad), 0, Mathf.Cos(angleInDegrees * Mathf.Deg2Rad));
+    }
+
+    public static void IgnoreLayerCollision(int guardMask, int lightMask, bool ignore = true)
+    {
+        Debug.Log("ignore");
     }
 
     void Update()
@@ -288,6 +298,7 @@ public class DecisionMaking : MonoBehaviour
 
     public void Wandering()
     {
+        anim.Play("walk");
         if (seen)
         {
             Pathfinding.startFollowingPath = false;
@@ -296,6 +307,7 @@ public class DecisionMaking : MonoBehaviour
     }
     public void Searching()
     {
+        anim.Play("walk");
         //Search state lasts 10 secs
         if (searchTimer >= 0)
         {
@@ -325,16 +337,17 @@ public class DecisionMaking : MonoBehaviour
         {
             //#Tergum <3
 
-            Debug.Log("Where was he last?");
+            //Debug.Log("Where was he last?");
 
             //Walk towards last seen location
-            if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 0.1f))
+            if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 1f))
             {
-                transform.LookAt(lastSeenLocation);
-                transform.position = Vector3.MoveTowards(transform.position, lastSeenLocation, pathfinding.walkingSpeed * Time.deltaTime);
+                //transform.LookAt(lastSeenLocation);
+                transform.position = Vector3.MoveTowards(transform.position, new Vector3(lastSeenLocation.x, 0f, lastSeenLocation.z), pathfinding.walkingSpeed * Time.deltaTime);
             }
-            else if (Vector3.Distance(transform.position, lastSeenLocation) <= 0.1f)
+            else if (Vector3.Distance(transform.position, lastSeenLocation) <= 1f)
             {
+                Debug.Log(lastLocationChecked);
                 lastLocationChecked = true;
             }
             
@@ -345,7 +358,7 @@ public class DecisionMaking : MonoBehaviour
             {
                 Debug.Log("Walk towards random direction");
                 transform.LookAt(randomDirection);
-                transform.position = Vector3.MoveTowards(transform.position, randomDirection, pathfinding.walkingSpeed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, new Vector3(randomDirection.x, 0, randomDirection.z), pathfinding.walkingSpeed * Time.deltaTime);
 
                 RaycastHit hit;
                 if (Physics.Raycast(transform.position, randomDirection, out hit))
@@ -353,7 +366,7 @@ public class DecisionMaking : MonoBehaviour
                     if (hit.transform.CompareTag("Obstacle") && Vector3.Distance(transform.position, hit.point) <= 1f)
                     {
                         //Debug.Log("Chose a more suitable random direction");
-                        randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
+                        randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), 0, UnityEngine.Random.Range(27.0f, -27.0f));
                     }
                 }
             }
@@ -365,7 +378,7 @@ public class DecisionMaking : MonoBehaviour
 
         if(randomFinished == true)
         {
-            randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), transform.position.y, UnityEngine.Random.Range(27.0f, -27.0f));
+            randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), 0, UnityEngine.Random.Range(27.0f, -27.0f));
             randomFinished = false;
         }           
         
@@ -373,34 +386,51 @@ public class DecisionMaking : MonoBehaviour
 
     public void Seeking()
     {
-
+        anim.Play("run");
     }
     public void Attacking()
     {
-        float hitSuccess;
-
-        //If guard 
-        //If guard is in range of the intruder
-        if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
+        if (attackSpeed >= 0)
         {
-            hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
+            attackSpeed -= Time.deltaTime;
         }
-
-        //If heavily injured, RUN
-        if (health <= 10)
+        else
         {
-            Transform fleeLocation = transform;
-            aiState = States.Flee;
-        }
+            anim.Play("attack");
+            attackSpeed = 1f;
 
-        if (health <= 0)
-        {
-            Debug.Log("dead");
+            if (this.anim.GetCurrentAnimatorStateInfo(0).IsName("attack"))
+            {
+                Debug.Log("Animation stopped playing");
+            }
+            float hitSuccess;
 
+            //If guard 
+            //If guard is in range of the intruder
+            if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
+            {
+                hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
+            }
+
+            //If heavily injured, RUN
+            if (health <= 10)
+            {
+                anim.Play("hurt");
+                Transform fleeLocation = transform;
+                aiState = States.Flee;
+            }
+
+            if (health <= 0)
+            {
+                anim.Play("die");
+                Debug.Log("dead");
+            }
         }
     }
+
     public void Fleeing()
     {
+        anim.Play("run");
         help = true;
         pathfinding.target = stationaryGuard;
         pathfinding.FindPath(transform.position, pathfinding.target.position);

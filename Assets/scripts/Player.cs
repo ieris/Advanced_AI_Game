@@ -7,6 +7,7 @@ public class Player : MonoBehaviour
     public static bool running = false;
     public static bool visibleInLight = false;
 
+    public int health = 100;
 
 	void Update ()
     {
