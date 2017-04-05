@@ -6,6 +6,7 @@ public class Pathfinding : MonoBehaviour
 {
     //Decision Making
     DecisionMaking dm;
+    StationaryGuard statGuard;
 
     private float time = 1f;
     private int i = 0;
@@ -31,11 +32,13 @@ public class Pathfinding : MonoBehaviour
     {
         grid = GetComponent<Grid>();
         dm = GetComponent<DecisionMaking>();
+        statGuard = GetComponent<StationaryGuard>();
     }
 
     void Start()
     {
         dm = new DecisionMaking();
+        statGuard = new StationaryGuard();
         target = Waypoint.waypoints[waypointIndex];
         FindPath(seeker.position, target.position);
 
@@ -43,27 +46,63 @@ public class Pathfinding : MonoBehaviour
 
     void Update()
     {
-        if (DecisionMaking.aiState == DecisionMaking.States.Flee)
+        if(StationaryGuard.aiState == StationaryGuard.States.Search)
         {
-            if(target != null)
+            if (target != null)
             {
-                Debug.Log("Fleeeeeeeee!1111");
-                Debug.Log(target.position);
+                //Debug.Log("Fleeeeeeeee!1111");
+                //Debug.Log(target.position);
                 target = null;
+                i = 0;
+                target = dm.fleeLocation;
+                FindPath(seeker.position, target.position);
             }
 
-            target = stationaryGuard;
-            FindPath(seeker.position, target.position);
+            //Debug.Log("Fleeeeeeeee!");
+            //Debug.Log(target.position);
 
-            Debug.Log("Fleeeeeeeee!");
-            Debug.Log(target.position);
             seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
+            //Debug.Log(grid.path[i].worldPosition);
 
             if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
             {
                 i++;
             }
+        }
+        if (DecisionMaking.aiState == DecisionMaking.States.Flee)
+        {
+            if(target != null)
+            {
+                //Debug.Log("Fleeeeeeeee!1111");
+                //Debug.Log(target.position);
+                target = null;
+                i = 0;
+                target = stationaryGuard;
+                FindPath(seeker.position, target.position);
+            }        
+
+            //Debug.Log("Fleeeeeeeee!");
+            //Debug.Log(target.position);
+
+            seeker.transform.LookAt(grid.path[i].worldPosition);
+            seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
+            //Debug.Log(grid.path[i].worldPosition);
+
+            if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
+            {
+                i++;
+            }
+        }
+        if (statGuard.goingToHelp == true)
+        {
+            if (target != null)
+            {
+                //target = null;
+            }
+
+            //target = stationaryGuard;
+            //FindPath(seeker.position, target.position);
         }
         if (startFollowingPath == true && DecisionMaking.aiState == DecisionMaking.States.Wander)
         {
@@ -158,6 +197,8 @@ public class Pathfinding : MonoBehaviour
         reachable = new List<Node>();
         explored = new List<Node>();
         path = new List<Node>();
+
+        path.Clear();
 
         Node startNode = grid.NodeFromWorldPoint(startPos);
         Node targetNode = grid.NodeFromWorldPoint(targetPos);

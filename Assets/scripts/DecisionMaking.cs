@@ -19,6 +19,7 @@ public class DecisionMaking : MonoBehaviour
     public float audioRangeZoneTwo = 15f;
     public float audioRangeZoneThree = 20f;
 
+    public Transform fleeLocation;
     private float confidenceRating;
     private Transform lastHeardLocation;
     private int guardHearing = 40;
@@ -421,7 +422,8 @@ public class DecisionMaking : MonoBehaviour
             //If heavily injured, RUN
             if (health == 10)
             {
-                Transform fleeLocation = transform;
+                fleeLocation = transform;
+                Debug.Log("my last location as i fleed: " + fleeLocation.position);
                 aiState = States.Flee;
             }
 
@@ -435,33 +437,15 @@ public class DecisionMaking : MonoBehaviour
 
     public void Fleeing()
     {
-        //anim.Play("run");
-        //Debug.Log("fleeing" + stationaryGuard.transform.position);
-        Pathfinding.startFollowingPath = false;        
-
-        //pathfinding.waypointIndex = 0;
-        //help = true;
-
-        /*Vector3 directionToStatGuard = (transform.position - stationaryGuard.position).normalized;
-        float distanceToStatGuard = Vector3.Distance(transform.position, stationaryGuard.position);
-
-        Debug.Log(directionToStatGuard);
-        Debug.Log(distanceToStatGuard);*/
+        anim.Play("walk");
+        //Pathfinding.startFollowingPath = false;        
 
         //In reach of stationary guard - safe area
 
-        if (!(Vector3.Distance(transform.position, stationaryGuard.position) <= 5f))
-        {            
-            pathfinding.target = stationaryGuard;
-            //Debug.Log("fleeing" + pathfinding.target.transform.position);
-            pathfinding.FindPath(transform.position, stationaryGuard.transform.position);
-            Pathfinding.startFollowingPath = true;
-        }
-
-        /*if (Physics.Raycast(transform.position, directionToStatGuard) && distanceToStatGuard <= 2f)
-        {                      
-            safe = true;
+        if (Vector3.Distance(transform.position, stationaryGuard.position) <= 1f)
+        {
+            help = true;
             StationaryGuard.aiState = StationaryGuard.States.Search;
-        }*/
+        }
     }
 }

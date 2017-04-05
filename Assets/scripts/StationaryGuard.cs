@@ -33,6 +33,7 @@ public class StationaryGuard : MonoBehaviour
     //Pathfdinging
     Pathfinding pathfinding;
 
+    public bool goingToHelp = false;
     public bool wandering = false;
     public bool help = false;
     //Sight
@@ -241,7 +242,17 @@ public class StationaryGuard : MonoBehaviour
     }
     public void Searching()
     {
+        RaycastHit hit;
 
+        if (Physics.Raycast(transform.position, Vector3.forward, out hit, 5f))
+        {
+            Debug.Log("raycasting");
+            if (hit.transform.tag == "Guard" && hit.collider.gameObject.GetComponent<DecisionMaking>().help == true)
+            {
+                Debug.Log("he needs help!");
+
+            }
+        }
     }
     public void Seeking()
     {
@@ -271,34 +282,51 @@ public class StationaryGuard : MonoBehaviour
     }
     public void Attacking()
     {
-        float hitSuccess;
-
-        //If guard is in range of the intruder
-        if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
+        if (attackSpeed <= 1)
         {
-            hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
 
-
+            attackSpeed += Time.deltaTime;
         }
-
-        //If heavily injured, RUN
-        if (health <= 10)
+        else
         {
-            Transform fleeLocation = transform;
-            aiState = States.Flee;
-        }
+            anim.Play("attack");
+            attackSpeed = 0f;
 
-        if (health <= 0)
-        {
-            Debug.Log("dead");
+            if (this.anim.GetCurrentAnimatorStateInfo(0).IsName("attack"))
+            {
+                Debug.Log("Animation stopped playing");
+                Player.health -= damage;
+                Debug.Log("health: " + Player.health);
+            }
+            float hitSuccess;
 
+            //If guard 
+            //If guard is in range of the intruder
+            if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
+            {
+                hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
+            }
+
+            //If heavily injured, RUN
+            if (health == 10)
+            {
+                fleeLocation = transform;
+                Debug.Log("my last location as i fleed: " + fleeLocation.position);
+                aiState = States.Flee;
+            }
+
+            if (health <= 0)
+            {
+                anim.Play("die");
+                Debug.Log("dead");
+            }
         }
     }
     public void Fleeing()
     {
-        help = true;
+        /*help = true;
         pathfinding.target = stationaryGuard;
         pathfinding.FindPath(transform.position, pathfinding.target.position);
-        Pathfinding.startFollowingPath = true;
+        Pathfinding.startFollowingPath = true;*/
     }
 }
