@@ -68,7 +68,7 @@ public class Pathfinding : MonoBehaviour
                 i++;
             }
         }
-        else if (DecisionMaking.aiState == DecisionMaking.States.Flee)
+        else if (startFollowingPath == true && DecisionMaking.aiState == DecisionMaking.States.Flee)
         {
             if(target != null)
             {
@@ -81,9 +81,14 @@ public class Pathfinding : MonoBehaviour
             seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
 
-            if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
+            if ((Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f) && (!(Vector3.Distance(seeker.transform.position, stationaryGuard.position) <= 4f)))
             {
                 i++;
+            }
+            if (Vector3.Distance(seeker.transform.position, stationaryGuard.position) <= 4f)
+            {
+                target = null;
+                seeker.GetComponent<Animator>().Play("idle");
             }
         }
         if (statGuard.goingToHelp == true)

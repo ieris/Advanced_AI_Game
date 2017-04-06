@@ -130,16 +130,13 @@ public class DecisionMaking : MonoBehaviour
         {
             if(!seen)
             {
-                Debug.Log("Listening");
-                //listening();
+                listening();
             }           
         }
 
         //If heavily injured, RUN
         if (health == 10)
         {
-            fleeLocation = transform;
-            Debug.Log("my last location as i fleed: " + fleeLocation.position);
             aiState = States.Flee;
         }
 
@@ -192,6 +189,7 @@ public class DecisionMaking : MonoBehaviour
 
         if((player.GetComponent<CharacterController>().velocity.magnitude > 0))
         {
+            Debug.Log("in audio range");
             if (distanceToTarget <= audioRangeZoneOne)
             {
                 if (Player.sneaking == false)
@@ -211,7 +209,7 @@ public class DecisionMaking : MonoBehaviour
                 {
                     confidenceRating = zoneTwoPercentage * (randomRating / 10);
 
-                    //Debug.Log("confidence raring: " + confidenceRating);
+                    Debug.Log("confidence raring: " + confidenceRating);
                     //Check if guard can hear it
                     if (confidenceRating >= guardHearing)
                     {
@@ -461,6 +459,13 @@ public class DecisionMaking : MonoBehaviour
                 hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
             }                    
         }
+
+        //If heavily injured, RUN and store your location
+        if (health == 10)
+        {
+            fleeLocation = transform;
+            Debug.Log("my last location as i fleed: " + fleeLocation.position);
+        }
     }
 
     public void Fleeing()
@@ -472,15 +477,13 @@ public class DecisionMaking : MonoBehaviour
         if (health == 0)
         {
             aiState = States.Dead;
-        }
-
-        //Pathfinding.startFollowingPath = false;        
+        }       
 
         //In reach of stationary guard - safe area
 
-        if (Vector3.Distance(transform.position, stationaryGuard.position) <= 1f)
+        if (Vector3.Distance(transform.position, stationaryGuard.position) <= 4f)
         {
-            help = true;
+            Pathfinding.startFollowingPath = false;
             StationaryGuard.aiState = StationaryGuard.States.Help;
         }
     }
@@ -494,6 +497,5 @@ public class DecisionMaking : MonoBehaviour
             Debug.Log("now dead");
             this.GetComponent<Animator>().Stop();
         }
-        //Debug.Log("dead");
     }
 }

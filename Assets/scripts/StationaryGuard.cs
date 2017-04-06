@@ -279,17 +279,7 @@ public class StationaryGuard : MonoBehaviour
 
     public void Helping()
     {
-        RaycastHit hit;
-
-        if (Physics.Raycast(transform.position, Vector3.forward, out hit, 5f))
-        {
-            Debug.Log("raycasting");
-            if (hit.transform.tag == "Guard" && hit.collider.gameObject.GetComponent<DecisionMaking>().help == true)
-            {
-                Debug.Log("he needs help!");
-
-            }
-        }
+        Pathfinding.startFollowingPath = true;
     }
     public void Searching()
     {
