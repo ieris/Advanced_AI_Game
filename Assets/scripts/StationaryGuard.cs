@@ -68,8 +68,6 @@ public class StationaryGuard : MonoBehaviour
     public float rotationSpeed = 0.2f;
     Vector3 randomDirection;
 
-    public Vector3 originalPosition;
-
     public static States aiState;
     public bool returnToPost = false;
     public Transform player;
@@ -87,7 +85,6 @@ public class StationaryGuard : MonoBehaviour
     }
     void Start()
     {
-        originalPosition = transform.position;
         anim = GetComponent<Animator>();
         pathfinding = new Pathfinding();
 
@@ -107,9 +104,17 @@ public class StationaryGuard : MonoBehaviour
 
     void Update()
     {
-        watching();
-        //sightVisualisation();
-
+        if (aiState != States.Dead)
+        {
+            watching();
+        }
+        if (aiState != States.Dead)
+        {
+            if (!seen)
+            {
+                listening();
+            }
+        }
         switch (aiState)
         {
             case States.Idle:
@@ -304,16 +309,21 @@ public class StationaryGuard : MonoBehaviour
 
     public void Idle()
     {
-        statusSphere.GetComponent<Renderer>().material.color = Color.blue;
+        Debug.Log("idle");
         anim.Play("idle");
+        statusSphere.GetComponent<Renderer>().material.color = Color.blue;       
     }
 
     public void Helping()
     {
         statusSphere.GetComponent<Renderer>().material.color = Color.green;
+        anim.Play("walk");
+
+
     }
     public void Searching()
     {
+        lastLocationChecked = true;
         statusSphere.GetComponent<Renderer>().material.color = Color.yellow;
         anim.Play("walk");
         //Search state lasts 10 secs

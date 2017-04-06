@@ -54,21 +54,9 @@ public class Pathfinding : MonoBehaviour
         if(DecisionMaking.safe == true && StationaryGuard.aiState == StationaryGuard.States.Help)
         {
             Debug.Log("helping");
-            /*if (target != null)
-            {
-                target = null;
-                i = 0;
-                target = dm.fleeLocation;
-                FindPath(stationaryGuard.position, target.position);
-                //startFollowingPath = true;
-            }*/
-
-            //i = 0;
-
             FindPath(stationaryGuard.position, DecisionMaking.lastSeenLocation);
 
             if (startFollowingPath)
-            //Debug.Log("i am going to: " + target.position);
             {
                 stationaryGuard.transform.LookAt(grid.path[i].worldPosition);
                 stationaryGuard.transform.position = Vector3.MoveTowards(stationaryGuard.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
@@ -77,7 +65,15 @@ public class Pathfinding : MonoBehaviour
                     i++;
                 }
             }
-            
+
+            if (Vector3.Distance(stationaryGuard.transform.position, player.transform.position) <= 4f)
+            {
+                target = null;
+                startFollowingPath = false;
+                i = 0;
+                StationaryGuard.aiState = StationaryGuard.States.Search;
+            }
+
         }
         else if (startFollowingPath == true && DecisionMaking.aiState == DecisionMaking.States.Flee)
         {
@@ -131,7 +127,7 @@ public class Pathfinding : MonoBehaviour
             }
 
         }
-        else if (DecisionMaking.aiState == DecisionMaking.States.Seek)
+        else if (DecisionMaking.aiState == DecisionMaking.States.Seek || StationaryGuard.aiState == StationaryGuard.States.Seek)
         {
             //Not in range
             if (!(Vector3.Distance(seeker.transform.position, player.transform.position) <= 4f))
@@ -149,7 +145,7 @@ public class Pathfinding : MonoBehaviour
                 startFollowingPath = true;
             }
         }
-        else if (DecisionMaking.aiState == DecisionMaking.States.Attack)
+        else if (DecisionMaking.aiState == DecisionMaking.States.Attack || StationaryGuard.aiState == StationaryGuard.States.Attack)
         {
             //He is now out of attack range, get in range again
             if (!(Vector3.Distance(seeker.transform.position, player.transform.position) <= 4f))
