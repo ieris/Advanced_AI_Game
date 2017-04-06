@@ -6,6 +6,7 @@ using UnityEditor;
 
 public class DecisionMaking : MonoBehaviour
 {
+    private int increment = 0;
     public Animator anim;
     public GameObject statusSphere;
     //Hearing range zones
@@ -19,14 +20,13 @@ public class DecisionMaking : MonoBehaviour
     public float audioRangeZoneTwo = 11f;
     public float audioRangeZoneThree = 14f;
 
-    public Transform fleeLocation;
     private float confidenceRating;
     private Transform lastHeardLocation;
     private int guardHearing = 40;
     public bool heard = false;
 
     private float randomRating;
-    private Vector3 lastSeenLocation;
+    public static Vector3 lastSeenLocation;
     private float searchTimer = 10f;
 
     //Guard ability
@@ -44,7 +44,7 @@ public class DecisionMaking : MonoBehaviour
     Player playerGameObj;
 
     public bool help = false;
-    public bool safe = false;
+    public static bool safe = false;
 
     //Sight
     public bool seen = false;
@@ -122,6 +122,12 @@ public class DecisionMaking : MonoBehaviour
 
     void Update()
     {
+        
+        if(safe == true)
+        {
+            anim.Play("idle");
+            aiState = States.Idle;
+        }
         if(aiState != States.Flee || aiState != States.Dead)
         {
             watching();
@@ -132,12 +138,6 @@ public class DecisionMaking : MonoBehaviour
             {
                 listening();
             }           
-        }
-
-        //If heavily injured, RUN
-        if (health == 10)
-        {
-            aiState = States.Flee;
         }
 
         switch (aiState)
@@ -166,6 +166,10 @@ public class DecisionMaking : MonoBehaviour
                 Dead();
                 //code to animate door closed and switch to closed state
                 break;
+            case States.Idle:
+                Idle();
+                //code to animate door closed and switch to closed state
+                break;
         }
     }
 
@@ -176,6 +180,7 @@ public class DecisionMaking : MonoBehaviour
         Seek,
         Attack,
         Flee,
+        Idle,
         Dead
     }
 
@@ -189,7 +194,6 @@ public class DecisionMaking : MonoBehaviour
 
         if((player.GetComponent<CharacterController>().velocity.magnitude > 0))
         {
-            Debug.Log("in audio range");
             if (distanceToTarget <= audioRangeZoneOne)
             {
                 if (Player.sneaking == false)
@@ -459,12 +463,11 @@ public class DecisionMaking : MonoBehaviour
                 hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
             }                    
         }
-
+        
         //If heavily injured, RUN and store your location
         if (health == 10)
         {
-            fleeLocation = transform;
-            Debug.Log("my last location as i fleed: " + fleeLocation.position);
+            aiState = States.Flee;
         }
     }
 
@@ -483,7 +486,9 @@ public class DecisionMaking : MonoBehaviour
 
         if (Vector3.Distance(transform.position, stationaryGuard.position) <= 4f)
         {
+            safe = true;
             Pathfinding.startFollowingPath = false;
+            aiState = States.Idle;
             StationaryGuard.aiState = StationaryGuard.States.Help;
         }
     }
@@ -497,5 +502,9 @@ public class DecisionMaking : MonoBehaviour
             Debug.Log("now dead");
             this.GetComponent<Animator>().Stop();
         }
+    }
+    public void Idle()
+    {
+        Debug.Log("idlleee");
     }
 }

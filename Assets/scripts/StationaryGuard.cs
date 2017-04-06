@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class StationaryGuard : MonoBehaviour
 {
     public Animator anim;
-
+    public GameObject statusSphere;
     //Hearing range zones
     //Anything in zone one is guaranteed to be heard
     //Anything in zone two has 75% chance to be heard
@@ -17,7 +17,6 @@ public class StationaryGuard : MonoBehaviour
     public float audioRangeZoneTwo = 15f;
     public float audioRangeZoneThree = 20f;
 
-    public Transform fleeLocation;
     private float confidenceRating;
     private Transform lastHeardLocation;
     private int guardHearing = 40;
@@ -41,7 +40,6 @@ public class StationaryGuard : MonoBehaviour
     StationaryGuard statGuard;
     Player playerGameObj;
 
-    public bool wandering = false;
     public bool help = false;
     public bool safe = false;
     public bool goingToHelp = false;
@@ -70,9 +68,10 @@ public class StationaryGuard : MonoBehaviour
     public float rotationSpeed = 0.2f;
     Vector3 randomDirection;
 
+    public Vector3 originalPosition;
 
     public static States aiState;
-
+    public bool returnToPost = false;
     public Transform player;
     public float angleToPlayer;
 
@@ -88,6 +87,7 @@ public class StationaryGuard : MonoBehaviour
     }
     void Start()
     {
+        originalPosition = transform.position;
         anim = GetComponent<Animator>();
         pathfinding = new Pathfinding();
 
@@ -121,7 +121,6 @@ public class StationaryGuard : MonoBehaviour
                 //execute code for animating the door open, switch to open when done
                 break;
             case States.Seek:
-                wandering = false;
                 //Debug.Log("NO " + wandering);
                 Seeking();
                 //listening code for event to close door
@@ -130,11 +129,12 @@ public class StationaryGuard : MonoBehaviour
                 Attacking();
                 //code to animate door closed and switch to closed state
                 break;
-            case States.BackToWork:
-                //code to animate door closed and switch to closed state
-                break;
             case States.Help:
                 Helping();
+                //code to animate door closed and switch to closed state
+                break;
+            case States.Dead:
+                Dead();
                 //code to animate door closed and switch to closed state
                 break;
         }
@@ -147,7 +147,6 @@ public class StationaryGuard : MonoBehaviour
         Seek,
         Attack,
         Help,
-        BackToWork,
         Dead
     }
 
@@ -158,62 +157,77 @@ public class StationaryGuard : MonoBehaviour
 
         //Sound source is coming from zone one (guaranteed to be heard)
         //But only if player is not sneaking
-        if (distanceToTarget <= audioRangeZoneOne)
-        {
-            if (Player.sneaking == false)
-            {
-                //Debug.Log("Who goes there?");
-                //Debug.Log("Heard!");
-                heard = true;
-                aiState = States.Seek;
-            }
-        }
-        //Sound source is coming from zone two (75% chance to be heard)
-        //Guaranteed to be heard if running
-        else if ((distanceToTarget <= audioRangeZoneTwo) && (distanceToTarget > audioRangeZoneOne))
-        {
-            if (Player.sneaking == false)
-            {
-                confidenceRating = zoneTwoPercentage * (randomRating / 10);
 
-                //Debug.Log("confidence raring: " + confidenceRating);
-                //Check if guard can hear it
-                if (confidenceRating >= guardHearing)
+        if ((player.GetComponent<CharacterController>().velocity.magnitude > 0))
+        {
+            Debug.Log("in audio range");
+            if (distanceToTarget <= audioRangeZoneOne)
+            {
+                if (Player.sneaking == false)
                 {
-                    heard = true;
+                    Debug.Log("Who goes there?");
                     //Debug.Log("Heard!");
-                }
-            }
-
-            if (Player.running == true)
-            {
-                //Debug.Log("Who goes there?");
-                heard = true;
-                //Debug.Log("Heard!");
-                aiState = States.Seek;
-            }
-
-
-        }
-        //Sound source is coming from zone three (25% chance to be heard)
-        else if ((distanceToTarget <= audioRangeZoneThree) && (distanceToTarget > audioRangeZoneTwo))
-        {
-            if (Player.sneaking == false)
-            {
-                confidenceRating = zoneThreePercentage * (randomRating / 10);
-                Debug.Log("confidence raring: " + confidenceRating);
-
-                //Check if guard can hear it
-                if (confidenceRating >= guardHearing)
-                {
                     heard = true;
+                    aiState = States.Seek;
                 }
+
             }
-            if (Player.running == true)
+            //Sound source is coming from zone two (75% chance to be heard)
+            //Guaranteed to be heard if running
+            else if ((distanceToTarget <= audioRangeZoneTwo) && (distanceToTarget > audioRangeZoneOne))
             {
-                Debug.Log("Who goes there?");
-                heard = true;
-                aiState = States.Seek;
+                if (Player.sneaking == false)
+                {
+                    confidenceRating = zoneTwoPercentage * (randomRating / 10);
+
+                    Debug.Log("confidence raring: " + confidenceRating);
+                    //Check if guard can hear it
+                    if (confidenceRating >= guardHearing)
+                    {
+                        heard = true;
+                        Debug.Log("Heard!");
+                        aiState = States.Seek;
+                    }
+                }
+
+                if (Player.running == true)
+                {
+                    Debug.Log("Who goes there 2 ?");
+                    heard = true;
+                    aiState = States.Seek;
+                }
+                else
+                {
+                    heard = false;
+                }
+
+
+            }
+            //Sound source is coming from zone three (25% chance to be heard)
+            else if ((distanceToTarget <= audioRangeZoneThree) && (distanceToTarget > audioRangeZoneTwo))
+            {
+                if (Player.sneaking == false)
+                {
+                    confidenceRating = zoneThreePercentage * (randomRating / 10);
+                    Debug.Log("confidence raring: " + confidenceRating);
+
+                    //Check if guard can hear it
+                    if (confidenceRating >= guardHearing)
+                    {
+                        heard = true;
+                        aiState = States.Seek;
+                    }
+                }
+                if (Player.running == true)
+                {
+                    Debug.Log("Who goes there 3 ?");
+                    heard = true;
+                    aiState = States.Seek;
+                }
+                else
+                {
+                    heard = false;
+                }
             }
         }
         else
@@ -230,14 +244,13 @@ public class StationaryGuard : MonoBehaviour
 
         visibleTargets.Clear();
         float distanceToTarget = Vector3.Distance(transform.position, player.position);
-        //Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius +  " distance " + distanceToTarget);
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
         angleToPlayer = Vector3.Angle(directionToPlayer, transform.forward);
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
-        //Collider[] lightsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, visionMask);
         if (angleToPlayer < visionAngle / 2)
         {
-            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)) && Player.visibleInLight == true)
+            //Will see regardless of light for half guards view range
+            if ((distanceToTarget <= visionRadius / 2) && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)))
             {
                 visibleTargets.Add(player);
 
@@ -256,33 +269,52 @@ public class StationaryGuard : MonoBehaviour
 
                 seen = true;
             }
-            else
+            //Will see if intruder is visible
+            else if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)) && Player.visibleInLight == true)
+            {
+                visibleTargets.Add(player);
+
+                lineRender.SetVertexCount(2);
+                lineRender.SetPosition(0, transform.position);
+                lineRender.SetPosition(1, player.position);
+
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, directionToPlayer, out hit))
+                {
+                    if (hit.transform.CompareTag("Player"))
+                    {
+                        lastSeenLocation = hit.point;
+                    }
+                }
+
+                seen = true;
+            }
+            /*else
             {
                 lineRender.SetVertexCount(0);
                 seen = false;
-            }
+            }*/
         }
         else
         {
             seen = false;
             lineRender.SetVertexCount(0);
         }
-
-        //sightVisualisation();
-
     }
 
     public void Idle()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.blue;
         anim.Play("idle");
     }
 
     public void Helping()
     {
-        Pathfinding.startFollowingPath = true;
+        statusSphere.GetComponent<Renderer>().material.color = Color.green;
     }
     public void Searching()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.yellow;
         anim.Play("walk");
         //Search state lasts 10 secs
         if (searchTimer >= 0)
@@ -293,12 +325,12 @@ public class StationaryGuard : MonoBehaviour
         {
             Debug.Log("Time to go back to work!");
             Pathfinding.startFollowingPath = true;
-            aiState = States.BackToWork;
+            returnToPost = true;
             lastLocationChecked = false;
             searchTimer = 10f;
         }
         //If intruder is seen the timer is reset
-        if (seen)
+        if (seen || heard)
         {
             Debug.Log("INTRUDER!");
             searchTimer = 10f;
@@ -309,7 +341,7 @@ public class StationaryGuard : MonoBehaviour
         //Walk towards last seen location
         //If nothing is seen
         //Pick a random direction to walk in
-        else if (!seen && lastLocationChecked == false)
+        else if ((!seen && lastLocationChecked == false) || (!heard && lastLocationChecked == false))
         {
             //#Tergum <3
 
@@ -357,14 +389,17 @@ public class StationaryGuard : MonoBehaviour
             randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), 0, UnityEngine.Random.Range(27.0f, -27.0f));
             randomFinished = false;
         }
-
     }
+
     public void Seeking()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.magenta;
         anim.Play("run");
     }
     public void Attacking()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.red;
+
         if (attackSpeed <= 1)
         {
 
@@ -389,12 +424,17 @@ public class StationaryGuard : MonoBehaviour
             {
                 hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
             }
+        }
+    }
 
-            if (health <= 0)
-            {
-                anim.Play("die");
-                Debug.Log("dead");
-            }
+    public void Dead()
+    {
+        statusSphere.GetComponent<Renderer>().material.color = Color.black;
+        anim.Play("die");
+        if (this.anim.GetCurrentAnimatorStateInfo(0).IsName("die") && this.anim.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f)
+        {
+            Debug.Log("now dead");
+            this.GetComponent<Animator>().Stop();
         }
     }
 }
