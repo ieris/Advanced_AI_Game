@@ -21,6 +21,9 @@ public class FieldOfViewEditor : Editor {
         Handles.DrawWireArc(fow.transform.position, Vector3.up, Vector3.forward, 360, fow.audioRangeZoneTwo);
         Handles.color = Color.yellow;
         Handles.DrawWireArc(fow.transform.position, Vector3.up, Vector3.forward, 360, fow.audioRangeZoneThree);
+
+        Handles.color = Color.blue;
+        Handles.DrawWireArc(fow.transform.position, Vector3.up, Vector3.forward, 360, fow.visionRadius/2);
     }
 
 }

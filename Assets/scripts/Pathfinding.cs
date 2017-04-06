@@ -123,33 +123,26 @@ public class Pathfinding : MonoBehaviour
             }
 
         }
-        else if (startFollowingPath == false && DecisionMaking.aiState == DecisionMaking.States.Seek)
+        else if (DecisionMaking.aiState == DecisionMaking.States.Seek)
         {
-            //target = player.transform;
-            //FindPath(seeker.position, target.position);
-            startFollowingPath = true;
-        }
-        else if (startFollowingPath == true && DecisionMaking.aiState == DecisionMaking.States.Seek)
-        {
-            Debug.Log("walk towards player");
-
             //Not in range
             if (!(Vector3.Distance(seeker.transform.position, player.transform.position) <= 4f))
             {
                 seeker.transform.LookAt(player.position);
                 seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(player.position.x, 0, player.position.z), walkingSpeed * Time.deltaTime);
+                DecisionMaking.aiState = DecisionMaking.States.Search;
+                startFollowingPath = true;
             }
             //In range
             else
             {
                 Debug.Log("in range: attack!");
                 DecisionMaking.aiState = DecisionMaking.States.Attack;
-                startFollowingPath = false;
+                startFollowingPath = true;
             }
         }
-        else if (startFollowingPath == false && DecisionMaking.aiState == DecisionMaking.States.Attack)
+        else if (DecisionMaking.aiState == DecisionMaking.States.Attack)
         {
-
             //He is now out of attack range, get in range again
             if (!(Vector3.Distance(seeker.transform.position, player.transform.position) <= 4f))
             {
@@ -165,7 +158,6 @@ public class Pathfinding : MonoBehaviour
                 else
                 {
                     DecisionMaking.aiState = DecisionMaking.States.Seek;
-                    startFollowingPath = true;
                     time = 1f;
                 }
             }

@@ -43,7 +43,6 @@ public class DecisionMaking : MonoBehaviour
     StationaryGuard statGuard;
     Player playerGameObj;
 
-    public bool wandering = false;
     public bool help = false;
     public bool safe = false;
 
@@ -90,10 +89,6 @@ public class DecisionMaking : MonoBehaviour
         aiState = States.Wander;
     }
 
-    void LateUpdate()
-    {
-        sightVisualisation();
-    }
     void Start()
     {
         anim = GetComponent<Animator>();
@@ -130,7 +125,14 @@ public class DecisionMaking : MonoBehaviour
         if(aiState != States.Flee || aiState != States.Dead)
         {
             watching();
-            //listening();
+        }
+        if (aiState != States.Flee || aiState != States.Dead)
+        {
+            if(!seen)
+            {
+                Debug.Log("Listening");
+                //listening();
+            }           
         }
 
         //If heavily injured, RUN
@@ -144,9 +146,6 @@ public class DecisionMaking : MonoBehaviour
         switch (aiState)
         {
             case States.Wander:
-                //Debug.Log("Wandering");
-                wandering = true;
-                //Debug.Log("YES " + wandering);
                 Wandering();
                 //execute closed code & listener for interaction
                 break;
@@ -155,8 +154,6 @@ public class DecisionMaking : MonoBehaviour
                 //execute code for animating the door open, switch to open when done
                 break;
             case States.Seek:
-                wandering = false;
-                //Debug.Log("NO " + wandering);
                 Seeking();
                 //listening code for event to close door
                 break;
@@ -192,64 +189,78 @@ public class DecisionMaking : MonoBehaviour
 
         //Sound source is coming from zone one (guaranteed to be heard)
         //But only if player is not sneaking
-        if (distanceToTarget <= audioRangeZoneOne)
-        {
-            if(Player.sneaking == false)
-            {
-                //Debug.Log("Who goes there?");
-                //Debug.Log("Heard!");
-                heard = true;
-                aiState = States.Seek;
-            }         
-        }
-        //Sound source is coming from zone two (75% chance to be heard)
-        //Guaranteed to be heard if running
-        else if ((distanceToTarget <= audioRangeZoneTwo) && (distanceToTarget > audioRangeZoneOne))
-        {
-            if (Player.sneaking == false)
-            {
-                confidenceRating = zoneTwoPercentage * (randomRating / 10);
 
-                //Debug.Log("confidence raring: " + confidenceRating);
-                //Check if guard can hear it
-                if (confidenceRating >= guardHearing)
+        if((player.GetComponent<CharacterController>().velocity.magnitude > 0))
+        {
+            if (distanceToTarget <= audioRangeZoneOne)
+            {
+                if (Player.sneaking == false)
                 {
-                    heard = true;
+                    Debug.Log("Who goes there?");
                     //Debug.Log("Heard!");
+                    heard = true;
+                    aiState = States.Seek;
                 }
-            }
 
-            if(Player.running == true)
+            }
+            //Sound source is coming from zone two (75% chance to be heard)
+            //Guaranteed to be heard if running
+            else if ((distanceToTarget <= audioRangeZoneTwo) && (distanceToTarget > audioRangeZoneOne))
             {
-                //Debug.Log("Who goes there?");
-                heard = true;
-                //Debug.Log("Heard!");
-                aiState = States.Seek;
-            }
+                if (Player.sneaking == false)
+                {
+                    confidenceRating = zoneTwoPercentage * (randomRating / 10);
 
-            
-        }
-        //Sound source is coming from zone three (25% chance to be heard)
-        else if ((distanceToTarget <= audioRangeZoneThree) && (distanceToTarget > audioRangeZoneTwo))
-        {
-            if(Player.sneaking == false)
+                    //Debug.Log("confidence raring: " + confidenceRating);
+                    //Check if guard can hear it
+                    if (confidenceRating >= guardHearing)
+                    {
+                        heard = true;
+                        Debug.Log("Heard!");
+                        aiState = States.Seek;
+                    }
+                }
+
+                if (Player.running == true)
+                {
+                    Debug.Log("Who goes there 2 ?");
+                    heard = true;
+                    aiState = States.Seek;
+                }
+                else
+                {
+                    heard = false;
+                }
+
+
+            }
+            //Sound source is coming from zone three (25% chance to be heard)
+            else if ((distanceToTarget <= audioRangeZoneThree) && (distanceToTarget > audioRangeZoneTwo))
+            {
+            if (Player.sneaking == false)
             {
                 confidenceRating = zoneThreePercentage * (randomRating / 10);
                 Debug.Log("confidence raring: " + confidenceRating);
 
-                //Check if guard can hear it
-                if (confidenceRating >= guardHearing)
+                    //Check if guard can hear it
+                    if (confidenceRating >= guardHearing)
+                    {
+                        heard = true;
+                        aiState = States.Seek;
+                    }
+                }
+                if (Player.running == true)
                 {
+                    Debug.Log("Who goes there 3 ?");
                     heard = true;
+                    aiState = States.Seek;
+                }
+                else
+                {
+                    heard = false;
                 }
             }
-            if (Player.running == true)
-            {
-                Debug.Log("Who goes there?");
-                heard = true;
-                aiState = States.Seek;
-            }           
-        }
+        }                  
         else
         {
             heard = false;
@@ -258,22 +269,19 @@ public class DecisionMaking : MonoBehaviour
 
     public void watching()
     {
-        //statusSphere.renderer.material.color = new Color(0.5f, 1, 1);
-
         //Calculate the angle from guard to the player
         //If angle from guard to player is less than the field of view angle
         //And the player is not behind an obstacle, the guard can see the player
 
         visibleTargets.Clear();
         float distanceToTarget = Vector3.Distance(transform.position, player.position);
-        //Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius +  " distance " + distanceToTarget);
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
         angleToPlayer = Vector3.Angle(directionToPlayer, transform.forward);
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
-        //Collider[] lightsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, visionMask);
         if (angleToPlayer < visionAngle / 2)
         {
-            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)) && Player.visibleInLight == true)
+            //Will see regardless of light for half guards view range
+            if ((distanceToTarget <= visionRadius/2) && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)))
             {
                 visibleTargets.Add(player);
 
@@ -292,25 +300,37 @@ public class DecisionMaking : MonoBehaviour
 
                 seen = true;
             }
-            else
+            //Will see if intruder is visible
+            else if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)) && Player.visibleInLight == true)
+            {
+                visibleTargets.Add(player);
+
+                lineRender.SetVertexCount(2);
+                lineRender.SetPosition(0, transform.position);
+                lineRender.SetPosition(1, player.position);
+
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, directionToPlayer, out hit))
+                {
+                    if (hit.transform.CompareTag("Player"))
+                    {
+                        lastSeenLocation = hit.point;
+                    }
+                }
+
+                seen = true;
+            }
+            /*else
             {
                 lineRender.SetVertexCount(0);
                 seen = false;
-            }
+            }*/
         }
         else
         {
             seen = false;
             lineRender.SetVertexCount(0);
         }
-
-        //sightVisualisation();
-
-    }
-
-    public void sightVisualisation()
-    {
-        var myAngle = visionRadius * Vector3.up;
     }
 
     public void Wandering()
@@ -322,6 +342,10 @@ public class DecisionMaking : MonoBehaviour
         {
             Pathfinding.startFollowingPath = false;
             aiState = States.Seek;
+        }
+        if(heard)
+        {
+            Pathfinding.startFollowingPath = false;
         }
     }
     public void Searching()
@@ -342,7 +366,7 @@ public class DecisionMaking : MonoBehaviour
             searchTimer = 10f;
         }
         //If intruder is seen the timer is reset
-        if (seen)
+        if (seen || heard)
         {
             Debug.Log("INTRUDER!");
             searchTimer = 10f;
@@ -353,7 +377,7 @@ public class DecisionMaking : MonoBehaviour
         //Walk towards last seen location
         //If nothing is seen
         //Pick a random direction to walk in
-        else if (!seen && lastLocationChecked == false)
+        else if ((!seen && lastLocationChecked == false) || (!heard && lastLocationChecked == false))
         {
             //#Tergum <3
 
@@ -400,8 +424,7 @@ public class DecisionMaking : MonoBehaviour
         {
             randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), 0, UnityEngine.Random.Range(27.0f, -27.0f));
             randomFinished = false;
-        }           
-        
+        }                  
     }
 
     public void Seeking()
