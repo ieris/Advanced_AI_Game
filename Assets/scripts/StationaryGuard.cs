@@ -23,8 +23,9 @@ public class StationaryGuard : MonoBehaviour
     private int guardHearing = 40;
     public bool heard = false;
 
+    public static bool farLastSeenLocation = false;
     private float randomRating;
-    private Vector3 lastSeenLocation;
+    public static Vector3 lastSeenLocation;
     private float searchTimer = 10f;
 
     //Guard ability
@@ -51,7 +52,7 @@ public class StationaryGuard : MonoBehaviour
     private bool randomFinished = false;
 
     //public bool startFollowingPath = false;
-
+    private bool seenAtLeastOnce = false;
     public LineRenderer lineRender;
     public LayerMask playerMask;
     public LayerMask walls;
@@ -268,6 +269,7 @@ public class StationaryGuard : MonoBehaviour
             //Will see regardless of light for half guards view range
             if ((distanceToTarget <= visionRadius / 2) && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)))
             {
+                seenAtLeastOnce = true;
                 visibleTargets.Add(player);
 
                 lineRender.SetVertexCount(2);
@@ -302,7 +304,7 @@ public class StationaryGuard : MonoBehaviour
                         lastSeenLocation = hit.point;
                     }
                 }
-
+                seenAtLeastOnce = true;
                 seen = true;
             }
             /*else
@@ -346,7 +348,7 @@ public class StationaryGuard : MonoBehaviour
         {
             Debug.Log("Time to go back to work!");
             Pathfinding.startFollowingPath = true;
-            ReturnToPost();
+            aiState = States.ReturnToPost;
             lastLocationChecked = false;
             searchTimer = 10f;
         }
@@ -362,7 +364,7 @@ public class StationaryGuard : MonoBehaviour
         //Walk towards last seen location
         //If nothing is seen
         //Pick a random direction to walk in
-        else if ((!seen && lastLocationChecked == false) || (!heard && lastLocationChecked == false))
+        else if (((!seen && lastLocationChecked == false) || (!heard && lastLocationChecked == false)) && seenAtLeastOnce)
         {
             //#Tergum <3
 
@@ -371,8 +373,16 @@ public class StationaryGuard : MonoBehaviour
             //Walk towards last seen location
             if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 1f))
             {
-                transform.LookAt(lastSeenLocation);
-                transform.position = Vector3.MoveTowards(transform.position, new Vector3(lastSeenLocation.x, 0f, lastSeenLocation.z), pathfinding.walkingSpeed * Time.deltaTime);
+                if(Vector3.Distance(transform.position, lastSeenLocation) >= 6f)
+                {
+                    transform.LookAt(lastSeenLocation);
+                    transform.position = Vector3.MoveTowards(transform.position, new Vector3(lastSeenLocation.x, 0f, lastSeenLocation.z), pathfinding.walkingSpeed * Time.deltaTime);
+                    farLastSeenLocation = false;
+                }
+                else
+                {
+                    farLastSeenLocation = true;
+                }
             }
             else if (Vector3.Distance(transform.position, lastSeenLocation) <= 1f)
             {

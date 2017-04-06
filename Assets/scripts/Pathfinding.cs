@@ -195,15 +195,13 @@ public class Pathfinding : MonoBehaviour
         else if (StationaryGuard.aiState == StationaryGuard.States.ReturnToPost)
         {
             Debug.Log("return to post");
-            /*if (target != null)
+            if (target != null)
             {
                 target = null;
-                
-            }*/
-
-            i = 0;
-            target.position = StationaryGuard.originalPosition;
-            FindPath(stationaryGuard.position, target.position);
+                i = 0;
+            }
+            
+            FindPath(stationaryGuard.position, StationaryGuard.originalPosition);
             stationaryGuard.transform.LookAt(grid.path[i].worldPosition);
             stationaryGuard.transform.position = Vector3.MoveTowards(stationaryGuard.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
 
@@ -219,29 +217,37 @@ public class Pathfinding : MonoBehaviour
                 startFollowingPath = false;
             }
         }
+        else if(StationaryGuard.aiState == StationaryGuard.States.Search && StationaryGuard.farLastSeenLocation == true)
+        {
+            i = 0;
+            target.position = StationaryGuard.lastSeenLocation;
+            FindPath(stationaryGuard.position, target.position);
+            stationaryGuard.transform.LookAt(grid.path[i].worldPosition);
+            stationaryGuard.transform.position = Vector3.MoveTowards(stationaryGuard.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
+
+            if ((Vector3.Distance(grid.path[i].worldPosition, stationaryGuard.transform.position) <= 0.1f) && DecisionMaking.safe == false)
+            {
+                i++;
+            }
+        }
         if (DecisionMaking.safe == true && StationaryGuard.aiState == StationaryGuard.States.Help)
         {
             Debug.Log("helping");
             FindPath(stationaryGuard.position, DecisionMaking.lastSeenLocation);
 
-            if (startFollowingPath)
+            if (startFollowingPath && (statGuard.seen == false))
             {
                 stationaryGuard.transform.LookAt(grid.path[i].worldPosition);
                 stationaryGuard.transform.position = Vector3.MoveTowards(stationaryGuard.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
-                if (Vector3.Distance(grid.path[i].worldPosition, stationaryGuard.transform.position) <= 0.1f)
+                if (Vector3.Distance(grid.path[i].worldPosition, stationaryGuard.transform.position) <= 1f)
                 {
                     i++;
                 }
             }
-
-            if (Vector3.Distance(stationaryGuard.transform.position, player.transform.position) <= 4f)
+            else if(statGuard.seen == true)
             {
-                target = null;
                 startFollowingPath = false;
-                i = 0;
-                StationaryGuard.aiState = StationaryGuard.States.Search;
             }
-
         }
     }
 
