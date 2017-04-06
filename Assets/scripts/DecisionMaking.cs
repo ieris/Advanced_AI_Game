@@ -501,6 +501,8 @@ public class DecisionMaking : MonoBehaviour
         {
             Debug.Log("now dead");
             this.GetComponent<Animator>().Stop();
+            Destroy(GetComponent<DecisionMaking>());
+            Destroy(gameObject);
         }
     }
     public void Idle()

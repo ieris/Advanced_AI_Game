@@ -17,6 +17,7 @@ public class StationaryGuard : MonoBehaviour
     public float audioRangeZoneTwo = 15f;
     public float audioRangeZoneThree = 20f;
 
+    public static Vector3 originalPosition;
     private float confidenceRating;
     private Transform lastHeardLocation;
     private int guardHearing = 40;
@@ -85,6 +86,7 @@ public class StationaryGuard : MonoBehaviour
     }
     void Start()
     {
+        originalPosition = transform.position;
         anim = GetComponent<Animator>();
         pathfinding = new Pathfinding();
 
@@ -104,6 +106,10 @@ public class StationaryGuard : MonoBehaviour
 
     void Update()
     {
+        if (health == 0)
+        {
+            aiState = States.Dead;
+        }
         if (aiState != States.Dead)
         {
             watching();
@@ -142,6 +148,10 @@ public class StationaryGuard : MonoBehaviour
                 Dead();
                 //code to animate door closed and switch to closed state
                 break;
+            case States.ReturnToPost:
+                ReturnToPost();
+                //code to animate door closed and switch to closed state
+                break;
         }
     }
 
@@ -152,6 +162,7 @@ public class StationaryGuard : MonoBehaviour
         Seek,
         Attack,
         Help,
+        ReturnToPost,
         Dead
     }
 
@@ -323,7 +334,7 @@ public class StationaryGuard : MonoBehaviour
     }
     public void Searching()
     {
-        lastLocationChecked = true;
+        //lastLocationChecked = true;
         statusSphere.GetComponent<Renderer>().material.color = Color.yellow;
         anim.Play("walk");
         //Search state lasts 10 secs
@@ -335,7 +346,7 @@ public class StationaryGuard : MonoBehaviour
         {
             Debug.Log("Time to go back to work!");
             Pathfinding.startFollowingPath = true;
-            returnToPost = true;
+            ReturnToPost();
             lastLocationChecked = false;
             searchTimer = 10f;
         }
@@ -360,7 +371,7 @@ public class StationaryGuard : MonoBehaviour
             //Walk towards last seen location
             if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 1f))
             {
-                //transform.LookAt(lastSeenLocation);
+                transform.LookAt(lastSeenLocation);
                 transform.position = Vector3.MoveTowards(transform.position, new Vector3(lastSeenLocation.x, 0f, lastSeenLocation.z), pathfinding.walkingSpeed * Time.deltaTime);
             }
             else if (Vector3.Distance(transform.position, lastSeenLocation) <= 1f)
@@ -399,6 +410,12 @@ public class StationaryGuard : MonoBehaviour
             randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), 0, UnityEngine.Random.Range(27.0f, -27.0f));
             randomFinished = false;
         }
+    }
+
+    public void ReturnToPost()
+    {
+        anim.Play("walk");
+        statusSphere.GetComponent<Renderer>().material.color = Color.cyan;
     }
 
     public void Seeking()
@@ -445,6 +462,8 @@ public class StationaryGuard : MonoBehaviour
         {
             Debug.Log("now dead");
             this.GetComponent<Animator>().Stop();
+            Destroy(GetComponent<StationaryGuard>());
+            Destroy(gameObject);
         }
     }
 }

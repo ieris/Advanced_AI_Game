@@ -45,6 +45,12 @@ public class Player : MonoBehaviour
                     hit.collider.gameObject.GetComponent<DecisionMaking>().health -= damage;
                     Debug.Log("guard health: " + hit.collider.gameObject.GetComponent<DecisionMaking>().health);            
                 }
+                else if (hit.transform.tag == "StationaryGuard")
+                {
+                    hit.collider.gameObject.GetComponent<StationaryGuard>().anim.Play("hurt");
+                    hit.collider.gameObject.GetComponent<StationaryGuard>().health -= damage;
+                    Debug.Log("guard health: " + hit.collider.gameObject.GetComponent<StationaryGuard>().health);
+                }
             }
         }
 
