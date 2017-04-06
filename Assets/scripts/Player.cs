@@ -14,7 +14,7 @@ public class Player : MonoBehaviour
 
     public static int health = 100;
 
-    FirstPersonController fpc;
+    FirstPersonController fpc;    
 
     void Awake()
     {
@@ -78,6 +78,7 @@ public class Player : MonoBehaviour
     void death()
     {
         GetComponent<FirstPersonController>().enabled = false;
-        Debug.Log("Game Over");      
+        Debug.Log("Game Over");
+        Time.timeScale = 0;
     }
 }

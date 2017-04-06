@@ -46,6 +46,10 @@ public class Pathfinding : MonoBehaviour
 
     void Update()
     {
+        if(StationaryGuard.aiState == StationaryGuard.States.Dead)
+        {
+            target = null;
+        }
         if(StationaryGuard.aiState == StationaryGuard.States.Search)
         {
             if (target != null)

@@ -84,12 +84,7 @@ public class StationaryGuard : MonoBehaviour
     void Awake()
     {
         pathfinding = GetComponent<Pathfinding>();
-        aiState = States.Wander;
-    }
-
-    void LateUpdate()
-    {
-        sightVisualisation();
+        aiState = States.Idle;
     }
     void Start()
     {
@@ -117,12 +112,9 @@ public class StationaryGuard : MonoBehaviour
 
         switch (aiState)
         {
-            case States.Wander:
-                //Debug.Log("Wandering");
-                wandering = true;
-                //Debug.Log("YES " + wandering);
-                Wandering();
-                //execute closed code & listener for interaction
+            case States.Idle:
+                Idle();
+                //execute code for animating the door open, switch to open when done
                 break;
             case States.Search:
                 Searching();
@@ -138,6 +130,9 @@ public class StationaryGuard : MonoBehaviour
                 Attacking();
                 //code to animate door closed and switch to closed state
                 break;
+            case States.BackToWork:
+                //code to animate door closed and switch to closed state
+                break;
             case States.Help:
                 Helping();
                 //code to animate door closed and switch to closed state
@@ -147,11 +142,12 @@ public class StationaryGuard : MonoBehaviour
 
     public enum States
     {
-        Wander,
+        Idle,
         Search,
         Seek,
         Attack,
         Help,
+        BackToWork,
         Dead
     }
 
@@ -276,20 +272,11 @@ public class StationaryGuard : MonoBehaviour
 
     }
 
-    public void sightVisualisation()
+    public void Idle()
     {
-        var myAngle = visionRadius * Vector3.up;
+        anim.Play("idle");
     }
 
-    public void Wandering()
-    {
-        anim.Play("walk");
-        if (seen)
-        {
-            Pathfinding.startFollowingPath = false;
-            aiState = States.Seek;
-        }
-    }
     public void Helping()
     {
         RaycastHit hit;
@@ -316,7 +303,7 @@ public class StationaryGuard : MonoBehaviour
         {
             Debug.Log("Time to go back to work!");
             Pathfinding.startFollowingPath = true;
-            aiState = States.Wander;
+            aiState = States.BackToWork;
             lastLocationChecked = false;
             searchTimer = 10f;
         }

@@ -7,7 +7,7 @@ using UnityEditor;
 public class DecisionMaking : MonoBehaviour
 {
     public Animator anim;
-
+    public GameObject statusSphere;
     //Hearing range zones
     //Anything in zone one is guaranteed to be heard
     //Anything in zone two has 75% chance to be heard
@@ -15,9 +15,9 @@ public class DecisionMaking : MonoBehaviour
     private int zoneOnePercentage = 100;
     private int zoneTwoPercentage = 75;
     private int zoneThreePercentage = 25;
-    public float audioRangeZoneOne = 10f;
-    public float audioRangeZoneTwo = 15f;
-    public float audioRangeZoneThree = 20f;
+    public float audioRangeZoneOne = 8f;
+    public float audioRangeZoneTwo = 11f;
+    public float audioRangeZoneThree = 14f;
 
     public Transform fleeLocation;
     private float confidenceRating;
@@ -127,12 +127,19 @@ public class DecisionMaking : MonoBehaviour
 
     void Update()
     {
-        if(aiState != States.Flee)
+        if(aiState != States.Flee || aiState != States.Dead)
         {
             watching();
-        }   
-        //listening();
-        //sightVisualisation();
+            //listening();
+        }
+
+        //If heavily injured, RUN
+        if (health == 10)
+        {
+            fleeLocation = transform;
+            Debug.Log("my last location as i fleed: " + fleeLocation.position);
+            aiState = States.Flee;
+        }
 
         switch (aiState)
         {
@@ -159,6 +166,10 @@ public class DecisionMaking : MonoBehaviour
                 break;
             case States.Flee:
                 Fleeing();
+                //code to animate door closed and switch to closed state
+                break;
+            case States.Dead:
+                Dead();
                 //code to animate door closed and switch to closed state
                 break;
         }
@@ -247,6 +258,8 @@ public class DecisionMaking : MonoBehaviour
 
     public void watching()
     {
+        //statusSphere.renderer.material.color = new Color(0.5f, 1, 1);
+
         //Calculate the angle from guard to the player
         //If angle from guard to player is less than the field of view angle
         //And the player is not behind an obstacle, the guard can see the player
@@ -302,6 +315,8 @@ public class DecisionMaking : MonoBehaviour
 
     public void Wandering()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.blue;
+
         anim.Play("walk");
         if (seen)
         {
@@ -311,6 +326,7 @@ public class DecisionMaking : MonoBehaviour
     }
     public void Searching()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.yellow;
         anim.Play("walk");
         //Search state lasts 10 secs
         if (searchTimer >= 0)
@@ -390,10 +406,13 @@ public class DecisionMaking : MonoBehaviour
 
     public void Seeking()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.magenta;
         anim.Play("run");
     }
     public void Attacking()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.red;
+
         if (attackSpeed <= 1)
         {
             
@@ -417,27 +436,21 @@ public class DecisionMaking : MonoBehaviour
             if (Vector3.Distance(transform.position, player.transform.position) <= 2f)
             {
                 hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
-            }
-
-            //If heavily injured, RUN
-            if (health == 10)
-            {
-                fleeLocation = transform;
-                Debug.Log("my last location as i fleed: " + fleeLocation.position);
-                aiState = States.Flee;
-            }
-
-            if (health <= 0)
-            {
-                anim.Play("die");
-                Debug.Log("dead");
-            }
+            }                    
         }
     }
 
     public void Fleeing()
     {
+        statusSphere.GetComponent<Renderer>().material.color = Color.white;
+
         anim.Play("walk");
+
+        if (health == 0)
+        {
+            aiState = States.Dead;
+        }
+
         //Pathfinding.startFollowingPath = false;        
 
         //In reach of stationary guard - safe area
@@ -447,5 +460,17 @@ public class DecisionMaking : MonoBehaviour
             help = true;
             StationaryGuard.aiState = StationaryGuard.States.Help;
         }
+    }
+
+    public void Dead()
+    {
+        statusSphere.GetComponent<Renderer>().material.color = Color.black;
+        anim.Play("die");
+        if (this.anim.GetCurrentAnimatorStateInfo(0).IsName("die") && this.anim.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f)
+        {
+            Debug.Log("now dead");
+            this.GetComponent<Animator>().Stop();
+        }
+        //Debug.Log("dead");
     }
 }
