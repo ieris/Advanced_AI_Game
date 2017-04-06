@@ -445,7 +445,7 @@ public class DecisionMaking : MonoBehaviour
         if (Vector3.Distance(transform.position, stationaryGuard.position) <= 1f)
         {
             help = true;
-            StationaryGuard.aiState = StationaryGuard.States.Search;
+            StationaryGuard.aiState = StationaryGuard.States.Help;
         }
     }
 }

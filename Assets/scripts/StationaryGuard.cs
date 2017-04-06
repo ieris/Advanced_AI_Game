@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class StationaryGuard : MonoBehaviour
 {
+    public Animator anim;
+
     //Hearing range zones
     //Anything in zone one is guaranteed to be heard
     //Anything in zone two has 75% chance to be heard
@@ -15,16 +17,20 @@ public class StationaryGuard : MonoBehaviour
     public float audioRangeZoneTwo = 15f;
     public float audioRangeZoneThree = 20f;
 
+    public Transform fleeLocation;
+    private float confidenceRating;
     private Transform lastHeardLocation;
     private int guardHearing = 40;
     public bool heard = false;
 
-    private Transform lastSeenLocation;
+    private float randomRating;
+    private Vector3 lastSeenLocation;
+    private float searchTimer = 10f;
 
     //Guard ability
     public int hitAccuracy = 60;
     public int blockAccuracy = 20;
-    public float attackSpeed = 2.5f;
+    public float attackSpeed = 0f;
 
     public int health = 100;
     public int damage = 10;
@@ -32,28 +38,38 @@ public class StationaryGuard : MonoBehaviour
 
     //Pathfdinging
     Pathfinding pathfinding;
+    StationaryGuard statGuard;
+    Player playerGameObj;
 
-    public bool goingToHelp = false;
     public bool wandering = false;
     public bool help = false;
+    public bool safe = false;
+    public bool goingToHelp = false;
+
     //Sight
     public bool seen = false;
+    private bool lastLocationChecked = false;
+    private bool randomFinished = false;
 
-    public bool startFollowingPath = false;
+    //public bool startFollowingPath = false;
 
     public LineRenderer lineRender;
     public LayerMask playerMask;
     public LayerMask walls;
+    public LayerMask visionMask;
+    public LayerMask guardMask;
+    public LayerMask lightMast;
 
     public Transform stationaryGuard;
     public Transform head;
     public Transform aiPos;
     public List<Transform> visibleTargets = new List<Transform>();
 
-
-    public float visionRadius = 0.2f;
+    public float visionRadius = 8f;
     public float visionAngle = 60f;
     public float rotationSpeed = 0.2f;
+    Vector3 randomDirection;
+
 
     public static States aiState;
 
@@ -77,6 +93,7 @@ public class StationaryGuard : MonoBehaviour
     }
     void Start()
     {
+        anim = GetComponent<Animator>();
         pathfinding = new Pathfinding();
 
         lineRender = GetComponent<LineRenderer>();
@@ -121,8 +138,8 @@ public class StationaryGuard : MonoBehaviour
                 Attacking();
                 //code to animate door closed and switch to closed state
                 break;
-            case States.Flee:
-                Fleeing();
+            case States.Help:
+                Helping();
                 //code to animate door closed and switch to closed state
                 break;
         }
@@ -134,67 +151,97 @@ public class StationaryGuard : MonoBehaviour
         Search,
         Seek,
         Attack,
-        Flee,
+        Help,
         Dead
     }
 
     public void listening()
     {
-        float confidenceRating;
+        //Debug.Log(heard);
+        float distanceToTarget = Vector3.Distance(transform.position, player.position);
 
         //Sound source is coming from zone one (guaranteed to be heard)
-        if (Vector3.Distance(transform.position, lastHeardLocation.position) <= audioRangeZoneOne)
+        //But only if player is not sneaking
+        if (distanceToTarget <= audioRangeZoneOne)
         {
-            aiState = States.Seek;
+            if (Player.sneaking == false)
+            {
+                //Debug.Log("Who goes there?");
+                //Debug.Log("Heard!");
+                heard = true;
+                aiState = States.Seek;
+            }
         }
         //Sound source is coming from zone two (75% chance to be heard)
-        else if ((Vector3.Distance(transform.position, lastHeardLocation.position) <= audioRangeZoneTwo) && (Vector3.Distance(transform.position, lastHeardLocation.position) > audioRangeZoneOne))
+        //Guaranteed to be heard if running
+        else if ((distanceToTarget <= audioRangeZoneTwo) && (distanceToTarget > audioRangeZoneOne))
         {
-            float randomRating = UnityEngine.Random.Range(1.0f, 10.0f);
-            confidenceRating = zoneTwoPercentage * (randomRating / 10);
-
-            //Check if guard can hear it
-            if (confidenceRating >= guardHearing)
+            if (Player.sneaking == false)
             {
-                heard = true;
+                confidenceRating = zoneTwoPercentage * (randomRating / 10);
+
+                //Debug.Log("confidence raring: " + confidenceRating);
+                //Check if guard can hear it
+                if (confidenceRating >= guardHearing)
+                {
+                    heard = true;
+                    //Debug.Log("Heard!");
+                }
             }
+
+            if (Player.running == true)
+            {
+                //Debug.Log("Who goes there?");
+                heard = true;
+                //Debug.Log("Heard!");
+                aiState = States.Seek;
+            }
+
+
         }
         //Sound source is coming from zone three (25% chance to be heard)
-        else if ((Vector3.Distance(transform.position, lastHeardLocation.position) <= audioRangeZoneThree) && (Vector3.Distance(transform.position, lastHeardLocation.position) > audioRangeZoneTwo))
+        else if ((distanceToTarget <= audioRangeZoneThree) && (distanceToTarget > audioRangeZoneTwo))
         {
-            float randomRating = UnityEngine.Random.Range(1.0f, 10.0f);
-            confidenceRating = zoneThreePercentage * (randomRating / 10);
-
-            //Check if guard can hear it
-            if (confidenceRating >= guardHearing)
+            if (Player.sneaking == false)
             {
-                heard = true;
+                confidenceRating = zoneThreePercentage * (randomRating / 10);
+                Debug.Log("confidence raring: " + confidenceRating);
+
+                //Check if guard can hear it
+                if (confidenceRating >= guardHearing)
+                {
+                    heard = true;
+                }
             }
+            if (Player.running == true)
+            {
+                Debug.Log("Who goes there?");
+                heard = true;
+                aiState = States.Seek;
+            }
+        }
+        else
+        {
+            heard = false;
         }
     }
 
     public void watching()
     {
-        //sightVisualisation();
-
-        //See if any guard in the area needs help
-        //RaycastHit guardHit;
-        //Vector3 directionToGuardHit = (guardHit.transform.position - transform.position).normalized;
-
         //Calculate the angle from guard to the player
         //If angle from guard to player is less than the field of view angle
         //And the player is not behind an obstacle, the guard can see the player
 
         visibleTargets.Clear();
         float distanceToTarget = Vector3.Distance(transform.position, player.position);
-        Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius + " distance " + distanceToTarget);
+        //Debug.Log((distanceToTarget <= visionRadius) + " vision radius " + visionRadius +  " distance " + distanceToTarget);
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
         angleToPlayer = Vector3.Angle(directionToPlayer, transform.forward);
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, playerMask);
+        //Collider[] lightsInViewRadius = Physics.OverlapSphere(transform.position, visionRadius, visionMask);
         if (angleToPlayer < visionAngle / 2)
         {
-            //Player has been seen
-            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)))
+            if (distanceToTarget <= visionRadius && (!Physics.Raycast(transform.position, directionToPlayer, distanceToTarget, walls)) && Player.visibleInLight == true)
             {
                 visibleTargets.Add(player);
 
@@ -202,45 +249,48 @@ public class StationaryGuard : MonoBehaviour
                 lineRender.SetPosition(0, transform.position);
                 lineRender.SetPosition(1, player.position);
 
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, directionToPlayer, out hit))
+                {
+                    if (hit.transform.CompareTag("Player"))
+                    {
+                        lastSeenLocation = hit.point;
+                    }
+                }
+
                 seen = true;
             }
             else
             {
                 lineRender.SetVertexCount(0);
                 seen = false;
-                //Debug.Log("Not visible");
             }
         }
         else
         {
             seen = false;
             lineRender.SetVertexCount(0);
-            //Debug.Log("Not visible");
         }
 
         //sightVisualisation();
 
     }
 
-
     public void sightVisualisation()
     {
         var myAngle = visionRadius * Vector3.up;
-
-        //Debug.DrawLine(transform.position, hit.point);
     }
 
     public void Wandering()
     {
-        //wandering = true;
-        //watching();
-        //Debug.Log("wandering " + wandering);
+        anim.Play("walk");
         if (seen)
         {
+            Pathfinding.startFollowingPath = false;
             aiState = States.Seek;
         }
     }
-    public void Searching()
+    public void Helping()
     {
         RaycastHit hit;
 
@@ -254,31 +304,87 @@ public class StationaryGuard : MonoBehaviour
             }
         }
     }
-    public void Seeking()
+    public void Searching()
     {
-        //Debug.Log("I am now seeking the intruder");
-        //pathfinding.target = player.transform;
-        //pathfinding.FindPath(pathfinding.seeker.position, pathfinding.target.position);
-
-        if (heard)
+        anim.Play("walk");
+        //Search state lasts 10 secs
+        if (searchTimer >= 0)
         {
-            //Look at the last heard location
-            //Find path to that location
-            transform.LookAt(lastHeardLocation);
-            pathfinding.target = lastHeardLocation;
-            pathfinding.FindPath(transform.position, lastHeardLocation.position);
-            Pathfinding.startFollowingPath = true;
+            searchTimer -= Time.deltaTime;
         }
-
+        else
+        {
+            Debug.Log("Time to go back to work!");
+            Pathfinding.startFollowingPath = true;
+            aiState = States.Wander;
+            lastLocationChecked = false;
+            searchTimer = 10f;
+        }
+        //If intruder is seen the timer is reset
         if (seen)
         {
-            Pathfinding.startFollowingPath = false;
-            transform.LookAt(lastSeenLocation);
-            pathfinding.target = lastSeenLocation.transform;
-            pathfinding.FindPath(transform.position, pathfinding.target.position);
-            Pathfinding.startFollowingPath = true;
+            Debug.Log("INTRUDER!");
+            searchTimer = 10f;
+            aiState = States.Seek;
+            lastLocationChecked = false;
+        }
+        //If intruder not seen
+        //Walk towards last seen location
+        //If nothing is seen
+        //Pick a random direction to walk in
+        else if (!seen && lastLocationChecked == false)
+        {
+            //#Tergum <3
+
+            //Debug.Log("Where was he last?");
+
+            //Walk towards last seen location
+            if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 1f))
+            {
+                //transform.LookAt(lastSeenLocation);
+                transform.position = Vector3.MoveTowards(transform.position, new Vector3(lastSeenLocation.x, 0f, lastSeenLocation.z), pathfinding.walkingSpeed * Time.deltaTime);
+            }
+            else if (Vector3.Distance(transform.position, lastSeenLocation) <= 1f)
+            {
+                Debug.Log(lastLocationChecked);
+                lastLocationChecked = true;
+            }
+
+        }
+        else if (!seen && lastLocationChecked == true)
+        {
+            if (!(Vector3.Distance(transform.position, randomDirection) <= 5f))
+            {
+                Debug.Log("Walk towards random direction");
+                transform.LookAt(randomDirection);
+                transform.position = Vector3.MoveTowards(transform.position, new Vector3(randomDirection.x, 0, randomDirection.z), pathfinding.walkingSpeed * Time.deltaTime);
+
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, randomDirection, out hit))
+                {
+                    if (hit.transform.CompareTag("Obstacle") && Vector3.Distance(transform.position, hit.point) <= 1f)
+                    {
+                        //Debug.Log("Chose a more suitable random direction");
+                        randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), 0, UnityEngine.Random.Range(27.0f, -27.0f));
+                    }
+                }
+            }
+            else if (Vector3.Distance(transform.position, randomDirection) <= 5f)
+            {
+                randomFinished = true;
+            }
         }
 
+        if (randomFinished == true)
+        {
+            randomDirection = new Vector3(UnityEngine.Random.Range(10.0f, -20.0f), 0, UnityEngine.Random.Range(27.0f, -27.0f));
+            randomFinished = false;
+        }
+
+    }
+    public void Seeking()
+    {
+        anim.Play("run");
     }
     public void Attacking()
     {
@@ -307,26 +413,11 @@ public class StationaryGuard : MonoBehaviour
                 hitSuccess = UnityEngine.Random.Range(1.0f, 10.0f);
             }
 
-            //If heavily injured, RUN
-            if (health == 10)
-            {
-                fleeLocation = transform;
-                Debug.Log("my last location as i fleed: " + fleeLocation.position);
-                aiState = States.Flee;
-            }
-
             if (health <= 0)
             {
                 anim.Play("die");
                 Debug.Log("dead");
             }
         }
-    }
-    public void Fleeing()
-    {
-        /*help = true;
-        pathfinding.target = stationaryGuard;
-        pathfinding.FindPath(transform.position, pathfinding.target.position);
-        Pathfinding.startFollowingPath = true;*/
     }
 }

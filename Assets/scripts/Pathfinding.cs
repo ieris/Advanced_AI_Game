@@ -50,44 +50,32 @@ public class Pathfinding : MonoBehaviour
         {
             if (target != null)
             {
-                //Debug.Log("Fleeeeeeeee!1111");
-                //Debug.Log(target.position);
                 target = null;
                 i = 0;
                 target = dm.fleeLocation;
                 FindPath(seeker.position, target.position);
             }
 
-            //Debug.Log("Fleeeeeeeee!");
-            //Debug.Log(target.position);
-
             seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
-            //Debug.Log(grid.path[i].worldPosition);
 
             if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
             {
                 i++;
             }
         }
-        if (DecisionMaking.aiState == DecisionMaking.States.Flee)
+        else if (DecisionMaking.aiState == DecisionMaking.States.Flee)
         {
             if(target != null)
             {
-                //Debug.Log("Fleeeeeeeee!1111");
-                //Debug.Log(target.position);
                 target = null;
                 i = 0;
                 target = stationaryGuard;
                 FindPath(seeker.position, target.position);
             }        
 
-            //Debug.Log("Fleeeeeeeee!");
-            //Debug.Log(target.position);
-
             seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
-            //Debug.Log(grid.path[i].worldPosition);
 
             if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
             {
