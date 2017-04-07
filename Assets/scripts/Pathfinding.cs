@@ -30,6 +30,7 @@ public class Pathfinding : MonoBehaviour
 
     void Awake()
     {
+        //References to external scripts
         grid = GetComponent<Grid>();
         dm = GetComponent<DecisionMaking>();
         statGuard = GetComponent<StationaryGuard>();
@@ -46,8 +47,11 @@ public class Pathfinding : MonoBehaviour
 
     void Update()
     {
+        //If start following path is true, it runs the a* algorithm
+        //Checks if guard wandering
         if (startFollowingPath == true && DecisionMaking.aiState == DecisionMaking.States.Wander)
         {
+            //check if the path has been travelled, if yes set the target to the next waypoint
             if (i == grid.path.Count)
             {
                 i = 0;
@@ -56,6 +60,7 @@ public class Pathfinding : MonoBehaviour
                 FindPath(seeker.position, target.position);
                 //StartCoroutine("FollowThePath");
             }
+            //reset the waypoints to 0 and set the path to the beginning
             if (waypointIndex == Waypoint.waypoints.Length)
             {
                 Debug.Log("ranOut");
@@ -65,21 +70,25 @@ public class Pathfinding : MonoBehaviour
                 //StopCoroutine("FollowThePath");
             }
 
+            //move the guard to next node in the grid
             seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
+            //when the node is reached, to the next one
             if (Vector3.Distance(grid.path[i].worldPosition, seeker.transform.position) <= 0.1f)
             {
                 i++;
             }
 
         }
+        //if the guard is seeking: trying to get to the player
         else if (DecisionMaking.aiState == DecisionMaking.States.Seek)
         {
             Debug.Log("Seeking");
-            //Not in range
+            //Guard is not in range
             if (!(Vector3.Distance(seeker.transform.position, player.transform.position) <= 4f))
             {
                 Debug.Log("Get back here!");
+                //Move closer to the player if he walked off
                 seeker.transform.LookAt(player.position);
                 seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(player.position.x, 0, player.position.z), walkingSpeed * Time.deltaTime);
                 startFollowingPath = true;
@@ -87,18 +96,21 @@ public class Pathfinding : MonoBehaviour
             //In range
             else
             {
+                //Now guard can attack the player
                 Debug.Log("in range: attack!");
                 DecisionMaking.aiState = DecisionMaking.States.Attack;
                 startFollowingPath = true;
             }
-
+            //if player goes out of the vision radius, he is lost
             if ((Vector3.Distance(seeker.transform.position, player.transform.position) > dm.visionRadius))
             {
+                //search for him
                 Debug.Log("He's gone!?");
                 DecisionMaking.aiState = DecisionMaking.States.Search;
                 dm.seen = false;
             }
         }
+        //if guard is in attack mode
         else if (DecisionMaking.aiState == DecisionMaking.States.Attack)
         {
             //He is now out of attack range, get in range again
@@ -119,7 +131,7 @@ public class Pathfinding : MonoBehaviour
                     time = 1f;
                 }
             }
-
+            //if player goes out of the vision radius, he is lost
             if (Vector3.Distance(seeker.transform.position, player.transform.position) > dm.visionRadius)
             {
                 dm.seen = false;
@@ -127,8 +139,10 @@ public class Pathfinding : MonoBehaviour
                 DecisionMaking.aiState = DecisionMaking.States.Search;
             }
         }
+        //If guard is running away
         else if (startFollowingPath == true && DecisionMaking.aiState == DecisionMaking.States.Flee)
         {
+            //reset the pathfinding target to stationary guards position
             if (target != null)
             {
                 target = null;
@@ -137,6 +151,7 @@ public class Pathfinding : MonoBehaviour
                 FindPath(seeker.position, target.position);
             }
 
+            //move to next node in path
             seeker.transform.LookAt(grid.path[i].worldPosition);
             seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
 
@@ -145,6 +160,7 @@ public class Pathfinding : MonoBehaviour
                 i++;
             }
 
+            //the guard is now safe
             if (DecisionMaking.safe)
             {
                 i = 0;
@@ -155,6 +171,7 @@ public class Pathfinding : MonoBehaviour
 
         //Stationary Guard logic
 
+        //If seeking
         if (StationaryGuard.aiState == StationaryGuard.States.Seek)
         {
             //Not in range
@@ -200,6 +217,7 @@ public class Pathfinding : MonoBehaviour
                 DecisionMaking.aiState = DecisionMaking.States.Search;
             }
         }
+        //If the intruder wasnt seen, get back to your post
         else if (StationaryGuard.aiState == StationaryGuard.States.ReturnToPost)
         {
             Debug.Log("return to post");
@@ -209,6 +227,7 @@ public class Pathfinding : MonoBehaviour
                 i = 0;
             }
             
+            //find path to post
             FindPath(stationaryGuard.position, StationaryGuard.originalPosition);
             stationaryGuard.transform.LookAt(grid.path[i].worldPosition);
             stationaryGuard.transform.position = Vector3.MoveTowards(stationaryGuard.transform.position, new Vector3(grid.path[i].worldPosition.x, 0, grid.path[i].worldPosition.z), walkingSpeed * Time.deltaTime);
@@ -225,6 +244,8 @@ public class Pathfinding : MonoBehaviour
                 startFollowingPath = false;
             }
         }
+
+        //if the location to intruders last seen location is far, make a path to it 
         else if(StationaryGuard.aiState == StationaryGuard.States.Search && StationaryGuard.farLastSeenLocation == true)
         {
             i = 0;
@@ -238,6 +259,8 @@ public class Pathfinding : MonoBehaviour
                 i++;
             }
         }
+
+        //if guard is helping, go to the last seen location of intruder
         if (DecisionMaking.safe == true && StationaryGuard.aiState == StationaryGuard.States.Help)
         {
             Debug.Log("helping");
@@ -261,7 +284,7 @@ public class Pathfinding : MonoBehaviour
 
     public void FindPath(Vector3 startPos, Vector3 targetPos)
     {
-        //Debug.Log("findpath");
+        //store the nodes in the lists
         List<Node> reachable; //Open
         List<Node> explored;  //Closed
         List<Node> path;
@@ -270,14 +293,18 @@ public class Pathfinding : MonoBehaviour
         explored = new List<Node>();
         path = new List<Node>();
 
+        //clear the path if it is not empty
         path.Clear();
 
+        //convert node position to world position
         Node startNode = grid.NodeFromWorldPoint(startPos);
         Node targetNode = grid.NodeFromWorldPoint(targetPos);
 
+        //add first node to the list
         reachable = new List<Node>();
         reachable.Add(startNode);
 
+        //check which nodes are reachable and compare the cheapest ones
         while (reachable.Count > 0)
         {
             Node node = reachable[0];
@@ -290,16 +317,18 @@ public class Pathfinding : MonoBehaviour
                 }
             }
 
+            //place the chosen node to the explored list and remove from reachable
             reachable.Remove(node);
             explored.Add(node);
 
-
+            //we found the path
             if (node == targetNode)
             {
                 RetracePath(startNode, targetNode);
                 break;
             }
 
+            //find the neighbours and get their costs
             foreach (Node neighbour in grid.AddAdjacent(node))
             {
                 if (!neighbour.walkable || explored.Contains(neighbour))
@@ -322,6 +351,7 @@ public class Pathfinding : MonoBehaviour
         }
     }
 
+    //walk back the path
     void RetracePath(Node startNode, Node endNode)
     {
         List<Node> path = new List<Node>();
@@ -340,6 +370,7 @@ public class Pathfinding : MonoBehaviour
         startFollowingPath = true;
     }
 
+    //calculates the distance from the nodes
     int GetDistance(Node nodeA, Node nodeB)
     {
         int dstX = Mathf.Abs(nodeA.graph_x - nodeB.graph_x);

@@ -7,14 +7,13 @@ public class Node
     //Keep track of previous nodes looked at and adjacent nodes
     public List<Node> adjacent = new List<Node>();
     public Node previous;
-    public string label = "";
     public Vector3 worldPosition;
 
     public bool walkable;
     public int graph_x;
     public int graph_y;
 
-
+    //Store distance and heuristic values
     public int g, h;
     public int f
     {

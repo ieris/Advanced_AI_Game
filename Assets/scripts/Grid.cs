@@ -31,6 +31,7 @@ public class Grid : MonoBehaviour
         grid = new Node[gridSizeX, gridSizeY];
         Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.y / 2;
 
+        //Goes through the array adding empty nodes to create room in teh array
         for (var x = 0; x < gridSizeX; x++)
         {
             for (var y = 0; y < gridSizeY; y++)
@@ -42,6 +43,8 @@ public class Grid : MonoBehaviour
         }
     }
 
+    //Creates the neighbours
+    //Each adjacent node is added  and stored in a list
     public List<Node> AddAdjacent(Node node)
     {
         //Fill the array with empty nodes and label each node with its position
@@ -62,24 +65,7 @@ public class Grid : MonoBehaviour
         return node.adjacent;
     }
 
-
-
-    void CreateGrid()
-    {
-        grid = new Node[gridSizeX, gridSizeY];
-        Vector3 worldBottomLeft = transform.position - Vector3.right * gridWorldSize.x / 2 - Vector3.forward * gridWorldSize.y / 2;
-
-        for (int x = 0; x < gridSizeX; x++)
-        {
-            for (int y = 0; y < gridSizeY; y++)
-            {
-                Vector3 worldPoint = worldBottomLeft + Vector3.right * (x * nodeDiameter + nodeRadius) + Vector3.forward * (y * nodeDiameter + nodeRadius);
-                bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));
-                grid[x, y] = new Node(walkable, worldPoint, x, y);
-            }
-        }
-    }
-
+    //Converts node coordinates to world position
     public Node NodeFromWorldPoint(Vector3 worldPosition)
     {
         float percentX = (worldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x;
@@ -92,6 +78,8 @@ public class Grid : MonoBehaviour
         return grid[x, y];
     }
 
+
+    //Visualizes the path
     public List<Node> path;
     void OnDrawGizmos()
     {

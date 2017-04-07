@@ -28,12 +28,12 @@ public class Player : MonoBehaviour
 
 	void Update ()
     {
-        //Debug.Log(visibleInLight);
         //Attacking
         if (Input.GetMouseButtonDown(0))
         {
             Debug.Log("Attack!");
 
+            //check if guard is in front, if yes, make his health lower
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out hit, 5f))
@@ -81,6 +81,7 @@ public class Player : MonoBehaviour
         }
     }
 
+    //reload scene if dead
     void death()
     {
         GetComponent<FirstPersonController>().enabled = false;
