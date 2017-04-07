@@ -22,7 +22,8 @@ public class DecisionMaking : MonoBehaviour
     public float audioRangeZoneThree = 14f;
 
     private float confidenceRating;
-    private Transform lastHeardLocation;
+    private Vector3 lastLocation;
+    private Vector3 lastHeardLocation;
     private int guardHearing = 40;
     public bool heard = false;
 
@@ -187,20 +188,22 @@ public class DecisionMaking : MonoBehaviour
 
     public void listening()
     {
-        //Debug.Log(heard);
         float distanceToTarget = Vector3.Distance(transform.position, player.position);
+        Vector3 directionToPlayer = (player.position - transform.position).normalized;
 
         //Sound source is coming from zone one (guaranteed to be heard)
         //But only if player is not sneaking
 
-        if((player.GetComponent<CharacterController>().velocity.magnitude > 0))
+        if ((player.GetComponent<CharacterController>().velocity.magnitude > 0))
         {
             if (distanceToTarget <= audioRangeZoneOne)
             {
                 if (Player.sneaking == false)
                 {
                     Debug.Log("Who goes there?");
+                    lastHeardLocation = player.transform.position;
                     heard = true;
+                    
                 }
 
             }
@@ -216,14 +219,17 @@ public class DecisionMaking : MonoBehaviour
                     //Check if guard can hear it
                     if (confidenceRating >= guardHearing)
                     {
-                        heard = true;
+                        
                         Debug.Log("Heard!");
+                        lastHeardLocation = player.transform.position;
+                        heard = true;
                     }
                 }
 
                 if (Player.running == true)
                 {
                     Debug.Log("Who goes there?");
+                    lastHeardLocation = player.transform.position;
                     heard = true;
                 }
                 else
@@ -244,12 +250,14 @@ public class DecisionMaking : MonoBehaviour
                     //Check if guard can hear it
                     if (confidenceRating >= guardHearing)
                     {
-                        heard = true;
+                        lastHeardLocation = player.transform.position;
                     }
                 }
                 if (Player.running == true)
                 {
                     Debug.Log("Who goes there?");
+
+                    lastHeardLocation = player.transform.position;
                     heard = true;
                 }
                 else
@@ -261,6 +269,11 @@ public class DecisionMaking : MonoBehaviour
         else
         {
             heard = false;
+        }
+
+        if(heard)
+        {
+            
         }
     }
 
@@ -292,6 +305,7 @@ public class DecisionMaking : MonoBehaviour
                     if (hit.transform.CompareTag("Player"))
                     {
                         lastSeenLocation = hit.point;
+                        Debug.Log("Last seen at: " + lastSeenLocation);
                     }
                 }
 
@@ -312,16 +326,12 @@ public class DecisionMaking : MonoBehaviour
                     if (hit.transform.CompareTag("Player"))
                     {
                         lastSeenLocation = hit.point;
+                        Debug.Log("Last seen at: " + lastSeenLocation);
                     }
                 }
 
                 seen = true;
             }
-            /*else
-            {
-                lineRender.SetVertexCount(0);
-                seen = false;
-            }*/
         }
         else
         {
@@ -376,31 +386,36 @@ public class DecisionMaking : MonoBehaviour
             searchTimer = 10f;
             aiState = States.Seek;
             lastLocationChecked = false;
+            lastLocation = lastSeenLocation;
+            transform.LookAt(lastSeenLocation);
         }
 
         if(heard && !seen)
         {
             Debug.Log("Who's there?");
             searchTimer = 10f;
-            lastLocationChecked = false;
+            lastLocation = lastHeardLocation;
+            transform.LookAt(lastHeardLocation);
         }
         //If intruder not seen
         //Walk towards last seen location
         //If nothing is seen
-        //Pick a random direction to walk in
+        //Pick a random direction to walk in        
         else if ((!seen && lastLocationChecked == false))
         {
+            
             //#Tergum <3
 
             Debug.Log("Where did I see him last?");
-
+            Debug.Log(lastLocation);
             //Walk towards last seen location
-            if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 1f))
+
+            if (!(Vector3.Distance(transform.position, lastLocation) <= 1f))
             {
-                transform.LookAt(new Vector3(lastSeenLocation.x, 0, lastSeenLocation.z));
-                transform.position = Vector3.MoveTowards(transform.position, new Vector3(lastSeenLocation.x, 0f, lastSeenLocation.z), pathfinding.walkingSpeed * Time.deltaTime);
+                //transform.LookAt(lastLocation);
+                transform.position = Vector3.MoveTowards(transform.position, new Vector3(lastLocation.x, 0f, lastLocation.z), pathfinding.walkingSpeed * Time.deltaTime);
             }
-            else if (Vector3.Distance(transform.position, lastSeenLocation) <= 1f)
+            else if (Vector3.Distance(transform.position, lastLocation) <= 1f)
             {
                 Debug.Log(lastLocationChecked);
                 lastLocationChecked = true;
@@ -412,7 +427,7 @@ public class DecisionMaking : MonoBehaviour
             if (!(Vector3.Distance(transform.position, randomDirection) <= 5f))
             {
                 Debug.Log("Walk towards random direction");
-                transform.LookAt(randomDirection);
+                //transform.LookAt(randomDirection);
                 transform.position = Vector3.MoveTowards(transform.position, new Vector3(randomDirection.x, 0, randomDirection.z), pathfinding.walkingSpeed * Time.deltaTime);
 
                 RaycastHit hit;
