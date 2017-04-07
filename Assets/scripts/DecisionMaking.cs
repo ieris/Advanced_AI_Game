@@ -427,7 +427,7 @@ public class DecisionMaking : MonoBehaviour
             if (!(Vector3.Distance(transform.position, randomDirection) <= 5f))
             {
                 Debug.Log("Walk towards random direction");
-                //transform.LookAt(randomDirection);
+                transform.LookAt(randomDirection);
                 transform.position = Vector3.MoveTowards(transform.position, new Vector3(randomDirection.x, 0, randomDirection.z), pathfinding.walkingSpeed * Time.deltaTime);
 
                 RaycastHit hit;

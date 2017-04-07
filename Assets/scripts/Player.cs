@@ -86,5 +86,6 @@ public class Player : MonoBehaviour
         GetComponent<FirstPersonController>().enabled = false;
         Debug.Log("Game Over");
         Time.timeScale = 0;
+        Application.LoadLevel(Application.loadedLevel);
     }
 }
