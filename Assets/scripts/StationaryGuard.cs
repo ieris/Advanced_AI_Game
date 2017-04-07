@@ -177,7 +177,6 @@ public class StationaryGuard : MonoBehaviour
 
         if ((player.GetComponent<CharacterController>().velocity.magnitude > 0))
         {
-            Debug.Log("in audio range");
             if (distanceToTarget <= audioRangeZoneOne)
             {
                 if (Player.sneaking == false)
@@ -322,7 +321,6 @@ public class StationaryGuard : MonoBehaviour
 
     public void Idle()
     {
-        Debug.Log("idle");
         anim.Play("idle");
         statusSphere.GetComponent<Renderer>().material.color = Color.blue;       
     }

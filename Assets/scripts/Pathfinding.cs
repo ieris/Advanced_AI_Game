@@ -8,7 +8,6 @@ public class Pathfinding : MonoBehaviour
     DecisionMaking dm;
     StationaryGuard statGuard;
 
-    private static Vector3 fleeLocation;
     private float time = 1f;
     private int i = 0;
 
@@ -76,12 +75,13 @@ public class Pathfinding : MonoBehaviour
         }
         else if (DecisionMaking.aiState == DecisionMaking.States.Seek)
         {
+            Debug.Log("Seeking");
             //Not in range
             if (!(Vector3.Distance(seeker.transform.position, player.transform.position) <= 4f))
             {
+                Debug.Log("Get back here!");
                 seeker.transform.LookAt(player.position);
                 seeker.transform.position = Vector3.MoveTowards(seeker.transform.position, new Vector3(player.position.x, 0, player.position.z), walkingSpeed * Time.deltaTime);
-                DecisionMaking.aiState = DecisionMaking.States.Search;
                 startFollowingPath = true;
             }
             //In range
@@ -90,6 +90,13 @@ public class Pathfinding : MonoBehaviour
                 Debug.Log("in range: attack!");
                 DecisionMaking.aiState = DecisionMaking.States.Attack;
                 startFollowingPath = true;
+            }
+
+            if ((Vector3.Distance(seeker.transform.position, player.transform.position) > dm.visionRadius))
+            {
+                Debug.Log("He's gone!?");
+                DecisionMaking.aiState = DecisionMaking.States.Search;
+                dm.seen = false;
             }
         }
         else if (DecisionMaking.aiState == DecisionMaking.States.Attack)
@@ -115,6 +122,7 @@ public class Pathfinding : MonoBehaviour
 
             if (Vector3.Distance(seeker.transform.position, player.transform.position) > dm.visionRadius)
             {
+                dm.seen = false;
                 Debug.Log("I lost him!");
                 DecisionMaking.aiState = DecisionMaking.States.Search;
             }

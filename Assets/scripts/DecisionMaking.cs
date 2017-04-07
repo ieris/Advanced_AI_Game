@@ -6,6 +6,7 @@ using UnityEditor;
 
 public class DecisionMaking : MonoBehaviour
 {
+    public static bool walkToLastLocation = false;
     private int increment = 0;
     public Animator anim;
     public GameObject statusSphere;
@@ -48,7 +49,7 @@ public class DecisionMaking : MonoBehaviour
 
     //Sight
     public bool seen = false;
-    private bool lastLocationChecked = false;
+    public static bool lastLocationChecked = false;
     private bool randomFinished = false;
 
     //public bool startFollowingPath = false;
@@ -199,9 +200,7 @@ public class DecisionMaking : MonoBehaviour
                 if (Player.sneaking == false)
                 {
                     Debug.Log("Who goes there?");
-                    //Debug.Log("Heard!");
                     heard = true;
-                    aiState = States.Seek;
                 }
 
             }
@@ -219,15 +218,13 @@ public class DecisionMaking : MonoBehaviour
                     {
                         heard = true;
                         Debug.Log("Heard!");
-                        aiState = States.Seek;
                     }
                 }
 
                 if (Player.running == true)
                 {
-                    Debug.Log("Who goes there 2 ?");
+                    Debug.Log("Who goes there?");
                     heard = true;
-                    aiState = States.Seek;
                 }
                 else
                 {
@@ -248,14 +245,12 @@ public class DecisionMaking : MonoBehaviour
                     if (confidenceRating >= guardHearing)
                     {
                         heard = true;
-                        aiState = States.Seek;
                     }
                 }
                 if (Player.running == true)
                 {
-                    Debug.Log("Who goes there 3 ?");
+                    Debug.Log("Who goes there?");
                     heard = true;
-                    aiState = States.Seek;
                 }
                 else
                 {
@@ -345,13 +340,20 @@ public class DecisionMaking : MonoBehaviour
             Pathfinding.startFollowingPath = false;
             aiState = States.Seek;
         }
-        if(heard)
+        else if(heard && !seen)
         {
             Pathfinding.startFollowingPath = false;
+            aiState = States.Search;
+        }
+        else if(seen && heard)
+        {
+            Pathfinding.startFollowingPath = false;
+            aiState = States.Seek;
         }
     }
     public void Searching()
     {
+        Debug.Log(seen);
         statusSphere.GetComponent<Renderer>().material.color = Color.yellow;
         anim.Play("walk");
         //Search state lasts 10 secs
@@ -362,33 +364,40 @@ public class DecisionMaking : MonoBehaviour
         else
         {
             Debug.Log("Time to go back to work!");
-            Pathfinding.startFollowingPath = true;
+            Pathfinding.startFollowingPath = true;           
             aiState = States.Wander;
             lastLocationChecked = false;
             searchTimer = 10f;
         }
         //If intruder is seen the timer is reset
-        if (seen || heard)
+        if (seen)
         {
             Debug.Log("INTRUDER!");
             searchTimer = 10f;
             aiState = States.Seek;
             lastLocationChecked = false;
         }
+
+        if(heard && !seen)
+        {
+            Debug.Log("Who's there?");
+            searchTimer = 10f;
+            lastLocationChecked = false;
+        }
         //If intruder not seen
         //Walk towards last seen location
         //If nothing is seen
         //Pick a random direction to walk in
-        else if ((!seen && lastLocationChecked == false) || (!heard && lastLocationChecked == false))
+        else if ((!seen && lastLocationChecked == false))
         {
             //#Tergum <3
 
-            //Debug.Log("Where was he last?");
+            Debug.Log("Where did I see him last?");
 
             //Walk towards last seen location
             if (!(Vector3.Distance(transform.position, lastSeenLocation) <= 1f))
             {
-                //transform.LookAt(lastSeenLocation);
+                transform.LookAt(new Vector3(lastSeenLocation.x, 0, lastSeenLocation.z));
                 transform.position = Vector3.MoveTowards(transform.position, new Vector3(lastSeenLocation.x, 0f, lastSeenLocation.z), pathfinding.walkingSpeed * Time.deltaTime);
             }
             else if (Vector3.Distance(transform.position, lastSeenLocation) <= 1f)
